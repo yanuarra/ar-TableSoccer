@@ -12,13 +12,14 @@ public static class StaticData
     
     //ATT VAL    
     public static float ENERGY_COST_ATT = 2f; 
-    public static float REACTIVE_TIME_ATT = 2.5f; 
-    public static float CARRY_SPEED_ATT  = 1f;     
+    public static float REACTIVE_TIME_ATT = 2.5f;     
+    public static float CARRY_SPEED_ATT  = .75f;     
     public static float NORMAL_SPEED_ATT  = 1.5f;     
     public static float PASS_SPEED_ATT  = 1.5f;     
     
     //DEF VAL
     public static float ENERGY_COST_DEF = 3f;
+    public static float REACTIVE_TIME_DEF = 4f;    
     public static float NORMAL_SPEED_DEF  = 1f;        
     public static float RETURN_SPEED_DEF  = 1f;        
     public static float DETECTION_RANGE_DEF  = .35f;        
