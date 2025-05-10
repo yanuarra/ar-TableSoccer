@@ -15,6 +15,9 @@ namespace YRA
         [SerializeField] Transform parent;
         [SerializeField] GameObject soldierPrefab;
 
+        [SerializeField] private Material _matGray;
+        [SerializeField] private Material _matPlayer;
+        [SerializeField] private Material _matEnemy;
         public void Start()
         {
             GetTeamControllers();
@@ -50,7 +53,6 @@ namespace YRA
             soldierGO.transform.position = new Vector3(spawnPoint.x, 1, spawnPoint.z);
             Soldier soldier = soldierGO.GetComponent<Soldier>();
             AssignSoldierTeam(soldier, isPlayer);
-         
         }
         
         public void AssignSoldierTeam(Soldier soldier, bool isPlayer)
@@ -62,6 +64,25 @@ namespace YRA
             {
                 soldier.SetTeamController(teamControllerEnemy);
             }
+        }
+
+        public void ChangeMaterial(Soldier soldier, SoldierState state)
+        {
+            Renderer mat = soldier._charObj.GetComponent<Renderer>();
+            switch (state)
+            {       
+                case SoldierState.InActive:
+                    mat.material = _matGray;
+                break;
+                
+                case SoldierState.Active:
+                    mat.material = soldier.isPlayerTeam? _matPlayer:_matEnemy;
+                break;
+
+                case SoldierState.Chasing:
+                break;
+            }
+
         }
         
 
@@ -79,12 +100,12 @@ namespace YRA
 
         public List<Soldier> GetActiveDefenders()
         {
-            return soldiersCollection.Where(p => p.curSoldierRole == SoldierRole.Defender && p.IsActive).ToList();
+            return soldiersCollection.Where(p => p.curSoldierRole == SoldierRole.Defender && p.curSoldierState!= SoldierState.InActive).ToList();
         }
         
         public List<Soldier> GetActiveAttackers()
         {
-            return soldiersCollection.Where(p => p.curSoldierRole == SoldierRole.Attacker && p.IsActive).ToList();
+            return soldiersCollection.Where(p => p.curSoldierRole == SoldierRole.Attacker && p.curSoldierState!= SoldierState.InActive).ToList();
         }
     }
 }

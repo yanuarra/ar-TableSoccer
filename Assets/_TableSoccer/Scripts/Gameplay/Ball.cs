@@ -20,11 +20,13 @@ namespace YRA {
         SphereCollider _ballCollider;
         private Vector3 movementDirection;
         private Vector3 startPosition;
+        private Movement _movement;
 
         private void Start()
         {
             if (_ballRigidbody == null) _ballRigidbody = GetComponent<Rigidbody>();
             if (_ballCollider == null) _ballCollider = GetComponent<SphereCollider>();
+            if (_movement == null) _movement = GetComponent<Movement>();
             
             ballRadius = _ballCollider.radius;
         }
@@ -34,18 +36,22 @@ namespace YRA {
             curHolder = soldier;
             _ballRigidbody.isKinematic = true;
             transform.SetParent(soldier.transform);
-            transform.localPosition = Vector3.zero;
-            transform.localPosition += transform.forward;
+            // transform.localPosition = Vector3.zero;
+            transform.localPosition = new Vector3 (0,0,1);
+            _movement.StopMoving();
         }
         
-        public void PassBall(Vector3 direction, float speed)
+        public void PassBall(Transform target, float speed)
         {
-            movementDirection = direction.normalized;
+            // _movement.MoveToTarget(gameObject, target, speed);
+            _movement.MoveFollowObject(target.transform, speed);
+            // movementDirection = direction.normalized;
             _ballRigidbody.isKinematic = true;
         }
 
         public void Release()
         {
+            transform.SetParent(curHolder.transform.parent);
             curHolder = null;
             _ballRigidbody.isKinematic = true;
         }

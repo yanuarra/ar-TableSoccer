@@ -2,7 +2,7 @@
 public static class StaticData
 {
     //DEFAULT VAL
-    public static float ENERGY_REGENERATION_MAX = 6.0f; 
+    public static float ENERGY_MAX = 6.0f; 
     public static float ENERGY_REGENERATION_SPEED = 1.5f; 
     public static float SPAWN_TIME = .5f;
     public static float SPAWN_COST = 2f;

@@ -5,43 +5,66 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace YRA{
-    public class InputTapAndHold : MonoBehaviour
+    public class PlayerInputHandler : MonoBehaviour
     {
-        GameObject spawnedObject;
-        Vector2 touchPosition;
-        private event Action TrackInput = delegate { };
-        private event Action TapEvent = delegate { };
-        private event Action HoldEvent = delegate { };
-        private event Action ReleaseEvent = delegate { };
+        [SerializeField] private GameObject objectToSpawn;
+        [SerializeField] private Camera mainCamera;
+        [SerializeField] private LayerMask planeLayerMask;
 
         void Start()
         {
+            if (mainCamera == null)
+                mainCamera = Camera.main;
         }
         
         void Update()
         {
             if (Application.isMobilePlatform) 
             {
-                TrackInput = MobileDefaultInput;
+                HandleMobileInput();
+
             }
             else
             {
-                // TrackInput = EditorDefaultInput;
-                EditorDefaultInput();
+                HandlePCInput();
             }
         }
         
-        void MobileDefaultInput() {
+        void HandleMobileInput() {
+             if (Input.touchCount > 0)
+        {
             Touch touch = Input.GetTouch(0);
-                if (touch.phase == TouchPhase.Began)
-                    touchPosition = touch.position;
+            
+            if (touch.phase == TouchPhase.Began)
+            {
+                Vector2 touchPosition = touch.position;
+                SpawnObjectAtPosition(touchPosition);
+            }
+        }
+        }
+      
+        private void HandlePCInput()
+        {
+            // Check for mouse click
+            if (Input.GetMouseButtonDown(0))
+            {
+                Vector2 mousePosition = Input.mousePosition;
+                SpawnObjectAtPosition(mousePosition);
+            }
         }
 
-        void EditorDefaultInput() {
-            if (Input.GetKeyDown(KeyCode.Space) ) {
-                Debug.Log("Place");
-        }
+        private void SpawnObjectAtPosition(Vector2 screenPosition)
+        {
+            Ray ray = mainCamera.ScreenPointToRay(screenPosition);
+            RaycastHit hit;
 
-    }
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity, planeLayerMask))
+            {
+                // Spawn the object at hit position
+                Debug.Log("Object spawned at: " + hit.point);
+                if (objectToSpawn!= null)
+                    Instantiate(objectToSpawn, hit.point, Quaternion.identity);
+            }
+        }
     }
 }

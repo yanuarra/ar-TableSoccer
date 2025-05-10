@@ -1,54 +1,246 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.UI;
 
 namespace YRA
 {
     public class Movement : MonoBehaviour
     {
-        bool _isMoving = false;
-        GameObject _origin;
-        [SerializeField] GameObject _moveIndicator;
-        Vector3 _direction;
-        float _speed;
+        public enum MovementMode
+        {
+            Idle,
+            MoveToPosition,
+            MoveInDirection,
+            MoveFollowTarget,
+        }
+        public MovementMode currentMode = MovementMode.Idle;
+        private  bool _isMoving = false;
+        // private  GameObject _origin;
+        private  GameObject _target;
+        [SerializeField] 
+        private  GameObject _moveIndicator;
+        // private  Vector3 _direction;
+        private  Vector3 _rotationMask = new Vector3(0, 1, 1);
+        private  float _moveSpeed;
+        private  float _rotationSpeed = 180.0f;
+        private float arrivalDistance = 0.01f;
+        private  bool _faceMovementDirection = true;
+        
+        [SerializeField] 
+        private bool _lockXRotation = false;
+        [SerializeField] 
+        private bool _lockYRotation = true;
+        [SerializeField] 
+        private bool _lockZRotation = false;
 
+        // Target information
+        private Vector3 _targetPosition;
+        private Vector3 _moveDirection;
+        private Transform _targetObject;
+        private float _currentSpeed;
+        private Rigidbody rb;
+        private bool useRigidbody = false;
+        
+        private void Awake()
+        {
+            rb = GetComponent<Rigidbody>();
+        }        
+        
         void Update()
         {
-            if (!_isMoving) return;
-            DoMoving();
+            switch (currentMode)
+            {
+                case MovementMode.Idle:
+                    HandleIdle();
+                    break;
+                    
+                case MovementMode.MoveToPosition:
+                    HandleMoveToPosition();
+                    break;
+                    
+                case MovementMode.MoveInDirection:
+                    HandleMoveInDirection();
+                    break;
+                    
+                case MovementMode.MoveFollowTarget:
+                    HandleMoveFollowObject();
+                    break;
+            }
+        
+            if (!useRigidbody)
+            {
+                ApplyMovement();
+            }
+            
         }
 
-        public void MoveDirection(GameObject origin, Vector3 direction, float speed)
+        #region Public Control Methods
+        public void MoveToPosition(Vector3 position, float speed = -1)
         {
-            _isMoving = true;
-            _origin = origin;
-            _direction = direction;
-            _speed = speed;
+            currentMode = MovementMode.MoveToPosition;
+            _targetPosition = position;
+            _moveSpeed = speed;
+            ToggleMoveIndicator(true);
         }
+        
+        public void MoveInDirection(Vector3 direction, float speed = -1)
+        {
+            if (direction.sqrMagnitude > 0.01f)
+            {
+                currentMode = MovementMode.MoveInDirection;
+                _moveDirection = direction.normalized;
+                _moveSpeed = speed;
+            }
+            ToggleMoveIndicator(true);
+        }
+
+        public void MoveFollowObject(Transform target, float speed = -1)
+        {
+            if (target != null)
+            {
+                currentMode = MovementMode.MoveFollowTarget;
+                _targetObject = target;
+                _moveSpeed = speed;
+            }
+            ToggleMoveIndicator(true);
+        }
+        #endregion
+
+        #region Movement Mode Handlers
+        private void HandleIdle()
+        {
+            _currentSpeed = 0;
+            _moveSpeed = 0;
+            _moveDirection = Vector3.zero;
+            ToggleMoveIndicator(false);
+        }
+        
+        private void HandleMoveToPosition()
+        {
+            // Calculate direction to target
+            Vector3 directionToTarget = _targetPosition - transform.position;
+            // Normalize direction and set move direction
+            _moveDirection = directionToTarget.normalized;
+            float distanceToTarget = directionToTarget.magnitude;
+            _currentSpeed = _moveSpeed;
+
+            // If we're close enough to target, stop
+            if (distanceToTarget <= 0.01f)
+            {
+                _currentSpeed = 0;
+                currentMode = MovementMode.Idle;
+                return;
+            }
+            
+            // Rotate to face target if needed
+            if (_faceMovementDirection)
+            {
+                RotateTowards(_targetPosition);
+            }
+            
+            UpdateSpeed();
+        }
+        
+        private void HandleMoveInDirection()
+        {
+            _currentSpeed = _moveSpeed;
+            // UpdateSpeed();
+            // Rotate to face direction if needed
+            if (_faceMovementDirection && _moveDirection.sqrMagnitude > 0.01f)
+            {
+                RotateTowards(transform.position + _moveDirection);
+            }
+        }
+        
+        private void HandleMoveFollowObject()
+        {
+            if (_targetObject == null)
+            {
+                currentMode = MovementMode.Idle;
+                return;
+            }
+            
+            // Calculate direction and distance to target
+            Vector3 directionToTarget = _targetObject.position - transform.position;
+            float distanceToTarget = directionToTarget.magnitude;
+            
+            if (distanceToTarget <= arrivalDistance)
+            {
+                _currentSpeed = 0;
+                _moveDirection = Vector3.zero;
+                
+                // Still face the target
+                if (_faceMovementDirection)
+                {
+                    RotateTowards(_targetObject.position);
+                }
+            }
+            else
+            {
+                // Move toward target
+                _moveDirection = directionToTarget.normalized;
+                _currentSpeed = _moveSpeed;
+                
+                // Rotate to face target
+                if (_faceMovementDirection)
+                {
+                    RotateTowards(_targetObject.position);
+                }
+            }
+            
+            UpdateSpeed();
+        }
+        #endregion
+
+        #region Movement Application
+        private void ApplyMovement()
+        {
+            if (_moveDirection.sqrMagnitude > 0.01f && _currentSpeed > 0.01f)
+                transform.position += _moveDirection * _currentSpeed * Time.deltaTime;
+        
+            // transform.position = Vector3.MoveTowards(transform.position, _moveDirection, _moveSpeed * Time.deltaTime);
+            // transform.position = new Vector3(transform.position.x, 1, transform.position.z);
+        }  
+
+        private void RotateTowards(Vector3 targetPos)
+        {
+            // Vector3 lookatRot = Quaternion.LookRotation(targetPos, Vector3.up).eulerAngles;
+            // transform.rotation = Quaternion.Euler(Vector3.Scale(lookatRot, _rotationMask));
+   
+            Vector3 targetDirection = targetPos - transform.position;
+            if (targetDirection.sqrMagnitude < 0.001f)
+                return;
+            if (_lockXRotation) targetDirection.x = 0;
+            if (_lockYRotation) targetDirection.y = 0;
+            if (_lockZRotation) targetDirection.z = 0;
+            if (targetDirection != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
+                transform.rotation = Quaternion.RotateTowards(
+                    transform.rotation, 
+                    targetRotation, 
+                    _rotationSpeed * Time.deltaTime
+                );
+            }
+        }
+        
+        private void UpdateSpeed()
+        {
+        }
+        #endregion
+
+        public void ToggleMoveIndicator(bool state) {
+            if (_moveIndicator==null) return;
+            _moveIndicator.transform.localPosition = transform.forward;
+            _moveIndicator.SetActive(state);
+        }     
 
         public void StopMoving() {
-           _isMoving = false;
-            _moveIndicator.SetActive(false);
-        }
-
-        void DoMoving()
-        {
-            _moveIndicator.SetActive(true);
-            // Apply movement using rigidbody
-            // transform.Translate(direction* speed * Time.deltaTime);
-            // Vector3 movement = direction * speed * Time.deltaTime;
-            // rb.MovePosition(rb.position + movement);
-           _origin.transform.position = Vector3.MoveTowards(
-                _origin.transform.position, 
-                transform.position + _direction,
-                _speed * Time.deltaTime);
-            _origin.transform.position = new Vector3(_origin.transform.position.x, 1, _origin.transform.position.z);
-            // Rotate towards the movement direction
-            Quaternion targetRotation = Quaternion.LookRotation(_direction,Vector3.up);
-            _origin.transform.rotation = targetRotation;
-            // transform.rotation = Quaternion.Slerp(_origin.transform.rotation, targetRotation, 45f * Time.deltaTime);
-            // if (direction != Vector3.zero)
-            // {
-            //     transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 100f * Time.deltaTime);
-            // } 
+            currentMode = MovementMode.Idle;
+            _moveDirection = Vector3.zero;
+            _currentSpeed = 0;
+            _isMoving = false;
+            _target = null;
+            ToggleMoveIndicator(false);
         }
     }
 }

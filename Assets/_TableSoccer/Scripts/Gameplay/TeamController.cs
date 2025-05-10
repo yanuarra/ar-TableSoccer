@@ -47,20 +47,24 @@ namespace YRA {
             }
         }
 
-        public Soldier GetNearestActiveAttacker(Vector3 position)
+        public Soldier GetNearestActiveAttacker(Soldier soldier)
         {
-            Soldier nearest = null;
-            float minDistance = float.MaxValue;
-            foreach (var soldier in SoldierManager.Instance.GetActiveAttackers())
-            {
-                float distance = Vector3.Distance(position, soldier.transform.position);
-                if (distance < minDistance)
-                {
-                    minDistance = distance;
-                    nearest = soldier;
-                }
-            }
-            return nearest;
+            List<Soldier> activeSoldiers = SoldierManager.Instance.GetActiveAttackers();
+            activeSoldiers.Remove(soldier);
+            return activeSoldiers.OrderBy(x => Vector3.Distance(soldier.transform.position, x.transform.position)).FirstOrDefault();
+    
+            // Soldier nearest = null;
+            // float minDistance = float.MaxValue;
+            // foreach (var soldier in SoldierManager.Instance.GetActiveAttackers())
+            // {
+            //     float distance = Vector3.Distance(position, soldier.transform.position);
+            //     if (distance < minDistance)
+            //     {
+            //         minDistance = distance;
+            //         nearest = soldier;
+            //     }
+            // }
+            // return nearest;
         }
         
         public void SetTeamRole(TeamRole role)
