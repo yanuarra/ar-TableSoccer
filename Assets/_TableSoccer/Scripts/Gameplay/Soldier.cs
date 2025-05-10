@@ -1,5 +1,8 @@
 using System;
 using System.Collections;
+using System.Linq;
+using Unity.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -15,8 +18,8 @@ namespace YRA{
         Active,
         Chasing,
         HoldingBall,
-        Standby,
-        Stunned
+        Spawning,
+        InActive
     }
 
     public class Soldier : MonoBehaviour
@@ -29,6 +32,9 @@ namespace YRA{
         public SoldierState curSoldierState { get; private set; }
         public TeamRole currentTeamRole { get; set; }
         public bool IsActive;
+        [SerializeField] private Material _matGray;
+        [SerializeField] private Material _matPlayer;
+        [SerializeField] private Material _matEnemy;
         
         [Header("Movement Settings")]
         float _movementSpeed;
@@ -36,28 +42,25 @@ namespace YRA{
         float _reactiveTime;
     
         [Header("Attacker Settings")]
-        [SerializeField] GameObject _directionIndicator;
         
         [Header("Defender Settings")]
         float _detectionRadius;
         
         [Header("Timing Settings")]
-        float _stunnedDuration;
+        float _reactiveDuration;
 
         [Header("References")]
         [SerializeField] TeamController teamController;
         [SerializeField] SphereCollider detectionCollider;
         [SerializeField] GameObject detectionVisual;
-        
         public Ball heldBall {get; private set;}
         private Soldier targetAttacker;
         private Vector3 goalPosition;
         private Coroutine stunnedCoroutine;
         private Rigidbody rb;
-         [SerializeField] 
-        private Movement _movement;
-        [SerializeField] 
-        private Goal goal;
+        [SerializeField] private Movement _movement;
+        [SerializeField] private Goal goal;
+        float _distanceToBall;
         
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
@@ -66,54 +69,61 @@ namespace YRA{
             if (_movement == null) _movement = GetComponent<Movement>();
         }
 
-        public Vector3 CalculateThirdPoint(Vector3 characterPosition, Vector3 targetPosition)
-        {
-            // Project both points onto the XZ plane if working in 3D space
-            // Remove this if you're working in 2D space
-            Vector3 characterPosXZ = new Vector3(characterPosition.x, 0, characterPosition.z);
-            Vector3 targetPosXZ = new Vector3(targetPosition.x, 0, targetPosition.z);
-            
-            // Calculate direction vector from character to target
-            Vector3 directionToTarget = targetPosXZ - characterPosXZ;
-            
-            // Create a right angle by projecting the character position onto a line
-            // that is parallel to the X-axis and passes through the target position
-            
-            // The third point will have the same Z coordinate as the target
-            // and the same X coordinate as the character
-            Vector3 thirdPoint = new Vector3(characterPosXZ.x, 0, targetPosXZ.z);
-            
-            // Restore the Y value (height) if needed, typically using either the character or target height
-            thirdPoint.y = characterPosition.y; // You can choose targetPosition.y instead if appropriate
-            
-            return thirdPoint;
-        }
-
         void Update()
         {
-            // switch (curSoldierState)
-            // {
-            //     case SoldierState.Active:
-            //         HandleActiveState();
-            //         break;
-            //     case SoldierState.Chasing:
-            //         // HandleChasingState();
-            //         break;
-            //     case SoldierState.HoldingBall:
-            //         // HandleHoldingBallState();
-            //         break;
-            //     case SoldierState.Standby:
-            //         // Just waiting for detection trigger
-            //         break;
-            //     case SoldierState.Stunned:
-            //         // Wait until stun is over
-            //         break;
-            // }
-            // Vector3 direction = (goal.transform.position - transform.position).normalized;
-            // // Vector3 goalRight = Goal.goalPost.right;
-            // Vector3 perpendicular = Vector3.Cross(goal.transform.forward, Vector3.up);
-            // transform.Translate(-perpendicular * 10 * Time.deltaTime);
+            if (curSoldierRole==SoldierRole.Defender && 
+                curSoldierState == SoldierState.Active &&
+                Ball.Instance.curHolder != null)
+                DoDetection();
         }
+
+        public void SetTeamController(TeamController team)
+        {
+            teamController = team;
+            isPlayerTeam = teamController.isPlayerTeam;
+        }
+
+        void DoDetection()
+        {
+            _distanceToBall = Vector3.Distance(this.transform.position, Ball.Instance.curHolder.transform.position);
+            if ( _distanceToBall < _detectionRadius) 
+                SetState(SoldierState.Chasing);
+        }
+
+        void OnDrawGizmos()
+        {
+            if (curSoldierRole != SoldierRole.Defender && curSoldierState != SoldierState.Active ) return;
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position, _detectionRadius);
+        }
+
+        #region Collision Handlers
+        void OnTriggerEnter(Collider other)
+        {
+            //Check Defender and Attacker Collision 
+            if (other.TryGetComponent(out Soldier otherSoldier))
+            {
+                if (curSoldierRole == SoldierRole.Defender && 
+                    otherSoldier.heldBall != null)
+                {
+                    SetState(SoldierState.InActive);
+                    otherSoldier.PassBallToTeammate();
+                    // otherSoldier.SetState(SoldierState.InActive);
+                }
+            }
+
+            //Check Ball Collision
+            if (other.TryGetComponent(out Ball ball))
+            {
+                // if (ball.curHolder!=null) return;
+                if (curSoldierRole == SoldierRole.Attacker && curSoldierState == SoldierState.Chasing)
+                {
+
+                    HoldBall(ball);
+                }
+            }
+        }
+        #endregion
 
         public void OnSoldierStateChanged()
         {
@@ -124,17 +134,18 @@ namespace YRA{
                     HandleActiveState();
                     break;
                 case SoldierState.Chasing:
-                    // HandleChasingState();
+                    HandleChasingState();
                     break;
                 case SoldierState.HoldingBall:
                     HandleHoldingBallState();
                     break;
-                case SoldierState.Standby:
+                case SoldierState.Spawning:
                     // Just waiting for detection trigger
                     break;
-                case SoldierState.Stunned:
+                case SoldierState.InActive:
                     IsActive = false;
                     // Wait until stun is over
+                    HandleInactiveState();
                     break;
             }
         }
@@ -147,20 +158,21 @@ namespace YRA{
                 Debug.LogError("Ball is missing");
                 return;
             }
-            // look for the ball
+            // look for the goal
+            if (goal == null)
+                goal = FindObjectsByType<Goal>(FindObjectsSortMode.None).Where(x => x.isPlayerGoal != teamController.isPlayerTeam).FirstOrDefault();
+                    
+            // Attacker look for the ball
+            SetSoldierStat();
             if (curSoldierRole == SoldierRole.Attacker)
             {
                 if (Ball.Instance.curHolder == null)
                 {
-                    Debug.Log("Chase the ball");
-                    // Chase the free ball
-                    Vector3 direction = (Ball.Instance.transform.position - this.transform.position).normalized;
-                    SetSoldierStat();
-                    Debug.Log(direction);
-                    _movement.MoveDirection(gameObject, direction, _movementSpeed);
+                    SetState(SoldierState.Chasing);
                 }
                 else
                 {
+                    Debug.Log(gameObject.name + " State:Straight");
                     // If no Ball to chase or hold, go straight into the opponent Land Field
                     Vector3 originPosXZ = new Vector3(transform.position.x, 0, transform.position.z);
                     Vector3 targetPosXZ = new Vector3(goal.transform.position.x, 0, goal.transform.position.z);
@@ -171,8 +183,42 @@ namespace YRA{
                     _movement.MoveDirection(gameObject, direction, _movementSpeed);
                 }
             }
+            // Defender Standby
         }
         
+        private void HandleChasingState()
+        {
+            SetSoldierStat();
+            Debug.Log($"{curSoldierRole} is chasing the ball");
+            Vector3 direction = (Ball.Instance.transform.position - transform.position).normalized;
+            _movement.MoveDirection(gameObject, direction, _movementSpeed);
+            // if (curSoldierRole == SoldierRole.Attacker)
+            // {
+            //     Vector3 direction = (Ball.Instance.transform.position - transform.position).normalized;
+            //     _movement.MoveDirection(gameObject, direction, _movementSpeed);
+            // }
+            // else
+            // {
+            //     Debug.Log("Chase the attacker that is holding the ball");
+            //     Vector3 direction = (Ball.Instance.transform.position - transform.position).normalized;
+            //     _movement.MoveDirection(gameObject, direction, _movementSpeed);
+            // }
+        }
+
+        private void HandleInactiveState()
+        {
+            Debug.Log("Stunned");
+            SetSoldierStat();
+            StartCoroutine(StunnedRoutine(_reactiveTime));
+        }
+
+        IEnumerator StunnedRoutine(float duration)
+        {
+            _movement.StopMoving();
+            yield return new WaitForSeconds(duration);
+            SetState(SoldierState.Active);
+        }
+
         private void HandleHoldingBallState()
         {
             Debug.Log("Chase the goal");
@@ -203,15 +249,7 @@ namespace YRA{
         public void SetPlayerRole(SoldierRole newRole)
         {
             curSoldierRole = newRole;
-            
-            if (newRole == SoldierRole.Defender)
-            {
-                SetState(SoldierState.Standby);
-            }
-            else
-            {
-                SetState(SoldierState.Active);
-            }
+            SetState(SoldierState.Active);
         }
         
         public void SetState(SoldierState newState)
@@ -230,15 +268,14 @@ namespace YRA{
             
             ReleaseBall();
             
-            if (curSoldierRole == SoldierRole.Defender)
+            if (curSoldierRole == SoldierRole.Attacker)
             {
-                SetState(SoldierState.Standby);
+                SetState(SoldierState.InActive);
             }
             else
             {
                 // SetState(SoldierState.Active);
             }
-            
             // UpdateDetectionColliderState();
         }
         #endregion
@@ -265,25 +302,28 @@ namespace YRA{
         {
             if (heldBall == null) return;
             Soldier nearestTeammate = teamController.GetNearestActiveAttacker(transform.position);
+            Debug.Log(nearestTeammate);
             if (nearestTeammate != null && nearestTeammate != this)
             {
                 // Calculate direction to teammate
                 Vector3 passDirection = (nearestTeammate.transform.position - transform.position).normalized;
-                
                 // Release the ball and make it move towards the teammate
-                ReleaseBall();
                 heldBall.PassBall(passDirection, _passSpeed);
+                ReleaseBall();
+                // Set state to inactive temporarily
+                SetIncative();
+            }
+            else
+            {
                 
-                // Set state to stunned temporarily
-                SetStunned();
             }
         }
         #endregion
 
-        #region Stun Management
-        public void SetStunned()
+        #region Inactive Handling
+        public void SetIncative()
         {
-            SetState(SoldierState.Stunned);
+            SetState(SoldierState.InActive);
             if (stunnedCoroutine != null)
             {
                 StopCoroutine(stunnedCoroutine);
@@ -295,14 +335,14 @@ namespace YRA{
         {
             if (curSoldierRole == SoldierRole.Attacker)
             {
-                _stunnedDuration = StaticData.REACTIVE_TIME_ATT;
+                _reactiveDuration = StaticData.REACTIVE_TIME_ATT;
             }
             else
             {
-                _stunnedDuration = StaticData.REACTIVE_TIME_DEF;
+                _reactiveDuration = StaticData.REACTIVE_TIME_DEF;
             }
-            yield return new WaitForSeconds(_stunnedDuration);
-            SetState(SoldierState.Standby);
+            yield return new WaitForSeconds(_reactiveDuration);
+            SetState(SoldierState.Active);
             stunnedCoroutine = null;
         }
         #endregion

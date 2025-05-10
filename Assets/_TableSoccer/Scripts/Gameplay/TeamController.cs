@@ -15,11 +15,11 @@ namespace YRA {
     public class TeamController : MonoBehaviour
     {        
         [Header("UI References")]
-        Slider _energyBar;
+        [SerializeField] Slider _energyBar;
 
         [Header("Team Settings")]
         [SerializeField] string teamID;
-        public bool isPlayerTeam {get; private set;}
+        public bool isPlayerTeam; //{get; private set;}
         // [SerializeField] TeamRole currentRole;
         public TeamRole currentRole { get; private set; }
         
@@ -37,16 +37,6 @@ namespace YRA {
         {
             
         }
-        
-        public void AddSoldier(Soldier newSoldier)
-        {
-            if (!soldiers.Contains(newSoldier)) soldiers.Add(newSoldier);
-        }
-        
-        public void RemoveSoldier(Soldier oldSoldier)
-        {
-            if (soldiers.Contains(oldSoldier)) soldiers.Remove(oldSoldier);
-        }
 
         public void UpdateSoldiersState(Soldier except, SoldierState soldierState)
         {
@@ -61,16 +51,13 @@ namespace YRA {
         {
             Soldier nearest = null;
             float minDistance = float.MaxValue;
-            foreach (var soldier in GetActiveAttackers())
+            foreach (var soldier in SoldierManager.Instance.GetActiveAttackers())
             {
-                if (soldier.curSoldierRole == SoldierRole.Attacker && soldier.IsActive)
+                float distance = Vector3.Distance(position, soldier.transform.position);
+                if (distance < minDistance)
                 {
-                    float distance = Vector3.Distance(position, soldier.transform.position);
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        nearest = soldier;
-                    }
+                    minDistance = distance;
+                    nearest = soldier;
                 }
             }
             return nearest;
@@ -81,7 +68,7 @@ namespace YRA {
             currentRole = role;
             foreach (var soldier in soldiers)
             {
-                Debug.Log(soldier);
+                Debug.Log(string.Format("{0} cur {1} set {2}", soldier, soldier.curSoldierRole, role));
                 soldier.currentTeamRole = role;
                 if (role == TeamRole.Attacking)
                 {
@@ -92,16 +79,6 @@ namespace YRA {
                     soldier.SetPlayerRole(SoldierRole.Defender);
                 }
             }
-        }
-        
-        public List<Soldier> GetActiveDefenders()
-        {
-            return soldiers.Where(p => p.curSoldierRole == SoldierRole.Defender && p.IsActive).ToList();
-        }
-        
-        public List<Soldier> GetActiveAttackers()
-        {
-            return soldiers.Where(p => p.curSoldierRole == SoldierRole.Attacker && p.IsActive).ToList();
         }
     }
 }

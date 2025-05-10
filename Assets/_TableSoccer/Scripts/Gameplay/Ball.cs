@@ -35,19 +35,19 @@ namespace YRA {
             _ballRigidbody.isKinematic = true;
             transform.SetParent(soldier.transform);
             transform.localPosition = Vector3.zero;
-            // transform.position += soldier.transform.forward;
+            transform.localPosition += transform.forward;
         }
         
         public void PassBall(Vector3 direction, float speed)
         {
             movementDirection = direction.normalized;
-            _ballRigidbody.isKinematic = false;
+            _ballRigidbody.isKinematic = true;
         }
 
         public void Release()
         {
             curHolder = null;
-            _ballRigidbody.isKinematic = false;
+            _ballRigidbody.isKinematic = true;
         }
         
         private void OnTriggerEnter(Collider other)
@@ -55,13 +55,11 @@ namespace YRA {
             if (other.TryGetComponent(out Goal goal))
                 GameManager.Instance.ScoreGoal(goal.isPlayerGoal);
             
-            // Check if a free ball should be picked up by an Defender
-            if (other.TryGetComponent(out Soldier soldier) && 
-                soldier.curSoldierRole == SoldierRole.Attacker && 
-                soldier.curSoldierState == SoldierState.Active)
-            {
-                soldier.HoldBall(this);
-            }
+            // if (other.TryGetComponent(out Soldier soldier) )
+            // {
+            //     if (soldier.curSoldierRole == SoldierRole.Attacker && soldier.IsActive)
+            //         soldier.HoldBall(this);
+            // }
             // if (curHolder == null )
             // {
             //     Soldier soldier = other.GetComponent<Soldier>();

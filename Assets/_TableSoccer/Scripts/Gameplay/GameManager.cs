@@ -18,9 +18,9 @@ namespace YRA {
     public class GameManager : Singleton<GameManager>
     {
         [Header("Game Settings")]
-        [SerializeField] int _matchCount = StaticData.MATCH_COUNT;
-        [SerializeField] float _matchDuration = StaticData.MATCH_TIME_LIMIT;
-        [SerializeField] float _transitionDelay = 3f;
+        int _matchCount = StaticData.MATCH_COUNT;
+        float _matchDuration = StaticData.MATCH_TIME_LIMIT;
+        float _transitionDelay = 3f;
         
         [Header("UI References")]
         [SerializeField] TextMeshProUGUI _stateText;
@@ -96,6 +96,7 @@ namespace YRA {
 
         void SetupAttackDefenseRoles(TeamController attackingTeam, TeamController defendingTeam)
         {
+            Debug.Log($"attack {attackingTeam} def {defendingTeam}");
             attackingTeam.SetTeamRole(TeamRole.Attacking);
             defendingTeam.SetTeamRole(TeamRole.Defending);
         }
@@ -146,8 +147,14 @@ namespace YRA {
             TeamController[] teams = FindObjectsByType<TeamController>(FindObjectsSortMode.None);
             foreach (var team in teams)
             {
-                enemyTeam = team;
-                if (team.isPlayerTeam) playerTeam = team; 
+                if (team.isPlayerTeam)
+                {
+                    playerTeam = team;
+                }  
+                else
+                {
+                    enemyTeam = team;
+                }
             }
         }
         
