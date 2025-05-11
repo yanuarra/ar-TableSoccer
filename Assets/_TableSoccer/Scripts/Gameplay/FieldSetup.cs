@@ -94,7 +94,7 @@ namespace YRA {
             float multiplier =_playerTeamController.currentRole == TeamRole.Attacking? -1 : 1; 
             float offsetZ = Random.Range(0, multiplier * fieldLength);
             Debug.Log(multiplier);
-            _ball.transform.position = bounds.center + new Vector3(offsetX, .5f, offsetZ);
+            _ball.transform.position = bounds.center + new Vector3(offsetX, -.5f, offsetZ);
             Debug.Log(_ball.transform.position);
         }
     }

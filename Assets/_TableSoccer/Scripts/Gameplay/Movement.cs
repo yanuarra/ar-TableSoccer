@@ -116,22 +116,16 @@ namespace YRA
         
         private void HandleMoveToPosition()
         {
-            // Calculate direction to target
             Vector3 directionToTarget = _targetPosition - transform.position;
-            // Normalize direction and set move direction
             _moveDirection = directionToTarget.normalized;
             float distanceToTarget = directionToTarget.magnitude;
             _currentSpeed = _moveSpeed;
-
-            // If we're close enough to target, stop
             if (distanceToTarget <= 0.01f)
             {
                 _currentSpeed = 0;
                 currentMode = MovementMode.Idle;
                 return;
             }
-            
-            // Rotate to face target if needed
             if (_faceMovementDirection)
             {
                 RotateTowards(_targetPosition);
@@ -144,7 +138,6 @@ namespace YRA
         {
             _currentSpeed = _moveSpeed;
             // UpdateSpeed();
-            // Rotate to face direction if needed
             if (_faceMovementDirection && _moveDirection.sqrMagnitude > 0.01f)
             {
                 RotateTowards(transform.position + _moveDirection);
@@ -158,17 +151,12 @@ namespace YRA
                 currentMode = MovementMode.Idle;
                 return;
             }
-            
-            // Calculate direction and distance to target
             Vector3 directionToTarget = _targetObject.position - transform.position;
             float distanceToTarget = directionToTarget.magnitude;
-            
             if (distanceToTarget <= arrivalDistance)
             {
                 _currentSpeed = 0;
                 _moveDirection = Vector3.zero;
-                
-                // Still face the target
                 if (_faceMovementDirection)
                 {
                     RotateTowards(_targetObject.position);
@@ -176,11 +164,8 @@ namespace YRA
             }
             else
             {
-                // Move toward target
                 _moveDirection = directionToTarget.normalized;
                 _currentSpeed = _moveSpeed;
-                
-                // Rotate to face target
                 if (_faceMovementDirection)
                 {
                     RotateTowards(_targetObject.position);
@@ -198,7 +183,7 @@ namespace YRA
                 transform.position += _moveDirection * _currentSpeed * Time.deltaTime;
         
             // transform.position = Vector3.MoveTowards(transform.position, _moveDirection, _moveSpeed * Time.deltaTime);
-            // transform.position = new Vector3(transform.position.x, 1, transform.position.z);
+            transform.position = new Vector3(transform.position.x, 1, transform.position.z);
         }  
 
         private void RotateTowards(Vector3 targetPos)
@@ -230,7 +215,7 @@ namespace YRA
 
         public void ToggleMoveIndicator(bool state) {
             if (_moveIndicator==null) return;
-            _moveIndicator.transform.localPosition = transform.forward;
+            _moveIndicator.transform.localPosition = new Vector3 (0,-0.75f,1.75f);
             _moveIndicator.SetActive(state);
         }     
 

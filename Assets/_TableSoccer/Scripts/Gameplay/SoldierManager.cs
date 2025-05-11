@@ -14,9 +14,12 @@ namespace YRA
         TeamController teamControllerEnemy;
         [SerializeField] Transform parent;
         [SerializeField] GameObject soldierPrefab;
-        [SerializeField] private Material _matGray;
-        [SerializeField] private Material _matPlayer;
-        [SerializeField] private Material _matEnemy;
+        [SerializeField] public Material _matGray;
+        [SerializeField] public Material _matPlayer;
+        [SerializeField] public Material _matEnemy;
+        [SerializeField] public Color32 _colGray;
+        [SerializeField] public Color32 _colPlayer;
+        [SerializeField] public Color32 _colEnemy;
         public void Start()
         {
             GetTeamControllers();
@@ -79,23 +82,23 @@ namespace YRA
             }
         }
 
-        public void ChangeMaterial(Soldier soldier, SoldierState state)
-        {
-            Renderer mat = soldier._charObj.GetComponent<Renderer>();
-            switch (state)
-            {       
-                case SoldierState.InActive:
-                    mat.material = _matGray;
-                break;
+        // public void ChangeMaterial(Soldier soldier, SoldierState state)
+        // {
+        //     Renderer mat = soldier._charObj.GetComponent<Renderer>();
+        //     switch (state)
+        //     {       
+        //         case SoldierState.InActive:
+        //             mat.material = _matGray;
+        //         break;
                 
-                case SoldierState.Active:
-                    mat.material = soldier.curSoldierRole==SoldierRole.Attacker? _matPlayer:_matEnemy;
-                break;
+        //         case SoldierState.Active:
+        //             mat.material = soldier.curSoldierRole==SoldierRole.Attacker? _matPlayer:_matEnemy;
+        //         break;
 
-                case SoldierState.Chasing:
-                break;
-            }
-        }
+        //         case SoldierState.Chasing:
+        //         break;
+        //     }
+        // }
 
         public void AddSoldierToCollection(Soldier newSoldier)
         {

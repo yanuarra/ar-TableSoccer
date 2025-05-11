@@ -37,7 +37,7 @@ namespace YRA {
             _ballRigidbody.isKinematic = true;
             transform.SetParent(soldier.transform);
             // transform.localPosition = Vector3.zero;
-            transform.localPosition = new Vector3 (0,0,1);
+            transform.localPosition = new Vector3 (0,-0.5f,1);
             _movement.StopMoving();
         }
         
@@ -51,7 +51,8 @@ namespace YRA {
 
         public void Release()
         {
-            transform.SetParent(curHolder.transform.parent);
+            // transform.SetParent(curHolder.transform.parent);
+            transform.parent = null;
             curHolder = null;
             _ballRigidbody.isKinematic = true;
         }
@@ -62,7 +63,6 @@ namespace YRA {
                 // GameManager.Instance.ScorePoint(curHolder.teamController);
             
            //RESET
-           
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using Unity.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Rendering.Universal;
 
 namespace YRA{
@@ -34,41 +35,48 @@ namespace YRA{
         public bool IsActive;
         [field: SerializeField]
         public GameObject _charObj  { get; private set; }
-        float _spawnTime;
+        [SerializeField]  
+        Outline _outline;
+        private float _spawnTime;
         
         [Header("Movement Settings")]
-        float _movementSpeed;
-        float _passSpeed;
+        private float _movementSpeed;
+        private float _passSpeed;
         [Header("Timing Settings")]
-        float _reactiveTime;
+        private float _reactiveTime;
     
-        [Header("Attacker Settings")]
+        [Header("Character Settings")]
+        [SerializeField] Animator _charAnimator;
+        [SerializeField] SkinnedMeshRenderer _skinnedMeshRenderer;
         
         [Header("Defender Settings")]
-        float _detectionRadius;
+        private float _detectionRadius;
 
         [Header("References")]
         public TeamController teamController{ get; private set; }
         [SerializeField] SphereCollider detectionCollider;
         [SerializeField] GameObject detectionVisual;
         public Ball heldBall {get; private set;}
-        private Soldier _targetAttacker;
-        private Vector3 _goalPosition;
         private Vector3 _originPosition;
         private Coroutine _stunnedCoroutine;
-        private Rigidbody _rb;
         [SerializeField] private Movement _movement;
         [SerializeField] private Goal _goal;
-        float _distanceToBall;
+        private float _distanceToBall;
         
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
         {
-            if (_rb == null) _rb = GetComponent<Rigidbody>();
             if (_movement == null) _movement = GetComponent<Movement>();
-            // isPlayerTeam = teamController.isPlayerTeam;
+            if (_outline == null) _outline = GetComponent<Outline>();
+            if (_charAnimator == null) _charAnimator = GetComponent<Animator>();
+            if (_skinnedMeshRenderer == null) _skinnedMeshRenderer = GetComponent<SkinnedMeshRenderer>();
             // keep position
             _originPosition = transform.position;   
+        }
+
+        void ToggleOutline(bool state)
+        {
+            if (_outline != null) _outline.enabled = state;
         }
 
         public void SetTeamController(TeamController team)
@@ -88,7 +96,7 @@ namespace YRA{
 
         void DoDetection()
         {
-            _distanceToBall = Vector3.Distance(this.transform.position, Ball.Instance.curHolder.transform.position);
+            _distanceToBall = Vector3.Distance(transform.position, Ball.Instance.curHolder.transform.position);
             if ( _distanceToBall < _detectionRadius) 
                 SetState(SoldierState.Chasing);
         }
@@ -98,6 +106,35 @@ namespace YRA{
             if (curSoldierRole != SoldierRole.Defender && curSoldierState != SoldierState.Active ) return;
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, _detectionRadius);
+        }
+        
+        public void ChangeMaterial()
+        {
+            // Material[] mat = _skinnedMeshRenderer.sharedMaterials;
+            Material matBody = _skinnedMeshRenderer.sharedMaterials[0]; 
+            Material matHead = _skinnedMeshRenderer.sharedMaterials[1]; 
+            Material[] mats = new Material[]{matBody, matHead};; 
+            switch (curSoldierState)
+            {       
+                case SoldierState.InActive:
+                    // mat[0].SetColor("_Color", Color.gray);
+                    mats = new Material[]{SoldierManager.Instance._matGray, matHead};
+                break;
+                case SoldierState.Active:
+                    // mat[0].SetColor("_Color", curSoldierRole == SoldierRole.Attacker? Color.cyan:Color.red);
+                    // matsmat[0] = curSoldierRole == SoldierRole.Attacker? SoldierManager.Instance._matEnemy:SoldierManager.Instance._matPlayer ;
+                    mats = new Material[]{curSoldierRole == SoldierRole.Attacker? SoldierManager.Instance._matEnemy:SoldierManager.Instance._matPlayer, matHead};
+                break;
+                case SoldierState.Chasing:
+                break;
+            }
+            _skinnedMeshRenderer.materials = mats; 
+        }
+
+        IEnumerator WaitForSeconds (Action doneEvent, float duration)
+        {
+            yield return new WaitForSeconds(duration);
+            doneEvent?.Invoke();
         }
 
         #region Collision Handlers
@@ -111,7 +148,6 @@ namespace YRA{
                     HoldBall(ball);
                 }
             }
-            
         }
 
         void OnTriggerEnter(Collider other)
@@ -121,6 +157,7 @@ namespace YRA{
             //Check Attacker and Fence Collision 
             if (other.TryGetComponent(out Fence fence))
             {
+                _charAnimator.SetTrigger("Victory");
                 teamController.RemoveSoldierFromTeam(this);
                 Destroy(gameObject);
             }
@@ -131,9 +168,14 @@ namespace YRA{
                 if (curSoldierRole == SoldierRole.Defender && 
                     otherSoldier.heldBall != null)
                 {
-                    SetState(SoldierState.InActive);
-                    teamController.UpdateSoldiersState(this, SoldierState.Active);
                     otherSoldier.PassBallToTeammate();
+                    // _charAnimator.SetTrigger("Victory");
+                    SetState(SoldierState.InActive); 
+                    teamController.UpdateSoldiersState(this, SoldierState.Active);
+                    // StartCoroutine(WaitForSeconds(delegate { 
+                    //     SetState(SoldierState.InActive); 
+                    //     teamController.UpdateSoldiersState(this, SoldierState.Active);},
+                    //     1f));
                     // otherSoldier.SetState(SoldierState.InActive);
                 }
             }
@@ -144,6 +186,7 @@ namespace YRA{
                 // if (ball.curHolder!=null) return;
                 if (curSoldierRole == SoldierRole.Attacker && curSoldierState == SoldierState.Chasing)
                 {
+                    _charAnimator.SetTrigger("Pickup");
                     HoldBall(ball);
                 }
             }
@@ -153,6 +196,7 @@ namespace YRA{
         public void OnSoldierStateChanged()
         {
             IsActive = true;
+            ToggleOutline(false);
             switch (curSoldierState)
             {
                 case SoldierState.Active:
@@ -174,7 +218,7 @@ namespace YRA{
                     HandleInactiveState();
                     break;
             }
-            SoldierManager.Instance.ChangeMaterial(this, curSoldierState);
+            // SoldierManager.Instance.ChangeMaterial(this, curSoldierState);
         }
         
         #region State Handlers
@@ -188,6 +232,7 @@ namespace YRA{
             
             // Attacker look for the ball
             SetSoldierStat();
+            ChangeMaterial();
             if (curSoldierRole == SoldierRole.Attacker)
             {
                 if (Ball.Instance.curHolder == null)
@@ -196,6 +241,7 @@ namespace YRA{
                 }
                 else
                 {
+                    _charAnimator.SetTrigger("Running");
                     Debug.Log(gameObject.name + " State:Straight");
                     // If no Ball to chase or hold, go straight into the opponent Land Field
                     Vector3 originPosXZ = new Vector3(transform.position.x, 0, transform.position.z);
@@ -207,12 +253,17 @@ namespace YRA{
                     _movement.MoveInDirection(direction, _movementSpeed);
                 }
             }
+            else
+            {
+                _charAnimator.SetTrigger("Idle");
+            }
             // Defender Standby
         }
         
         private void HandleChasingState()
         {
             SetSoldierStat();
+            _charAnimator.SetTrigger("Running");
             Debug.Log($"{curSoldierRole} is chasing the ball");
             if (curSoldierRole == SoldierRole.Attacker)
             {
@@ -227,26 +278,44 @@ namespace YRA{
         private void HandleSpawningState()
         {
             SetSoldierStat();
+            ChangeMaterial();
             // if (teamController == null)
             //     teamController = teamController.;
             if (_goal == null)
                 _goal = teamController.goal;
+            _charAnimator.SetTrigger("Waving");
             StartCoroutine(StunnedRoutine(_spawnTime));
         }
 
         private void HandleInactiveState()
         {
             SetSoldierStat();
-            StartCoroutine(StunnedRoutine(_reactiveTime));
+            ChangeMaterial();
+            _charAnimator.SetTrigger("Idle");
+            if (curSoldierRole == SoldierRole.Defender)
+            {
+                StartCoroutine(GetBackToOriginPos());
+            }else
+            {
+                StartCoroutine(StunnedRoutine(_reactiveTime));
+            }
+        }
+        //Defender Get Back To Origin Pos
+        IEnumerator GetBackToOriginPos()
+        {
+            if (curSoldierRole == SoldierRole.Defender)
+            {
+                _charAnimator.SetTrigger("Running");
+                _movement.MoveToPosition(_originPosition, _movementSpeed);
+            }
+            yield return new WaitForSeconds(_reactiveTime);
+            SetState(SoldierState.Active);
         }
 
         IEnumerator StunnedRoutine(float duration)
         {
             Debug.Log($"{this.name} is stunned for {duration}" );
             _movement.StopMoving();
-            yield return new WaitForEndOfFrame();
-            if (curSoldierRole == SoldierRole.Defender)
-                _movement.MoveToPosition(_originPosition, _movementSpeed);
             yield return new WaitForSeconds(duration);
             SetState(SoldierState.Active);
         }
@@ -254,6 +323,7 @@ namespace YRA{
         private void HandleHoldingBallState()
         {
             Debug.Log("Chase the goal");
+            ToggleOutline(true);
             SetSoldierStat();
             // Vector3 direction = (_goal.transform.position - transform.position).normalized;
             Vector3 direction = _goal.transform.position - transform.position;
@@ -346,13 +416,13 @@ namespace YRA{
                 heldBall.PassBall(nearestTeammate.transform, _passSpeed);
                 // Set state to inactive temporarily
                 ReleaseBall();
-                SetState(SoldierState.InActive);
             }
             else
             {
                 //Defender WIN
                 GameManager.Instance.ScorePoint(teamController);
             }
+            SetState(SoldierState.InActive);
         }
         #endregion
     }
