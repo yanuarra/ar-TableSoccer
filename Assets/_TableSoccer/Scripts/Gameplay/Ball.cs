@@ -58,24 +58,11 @@ namespace YRA {
         
         private void OnTriggerEnter(Collider other)
         {
-            if (other.TryGetComponent(out Goal goal))
-                GameManager.Instance.ScoreGoal(goal.isPlayerGoal);
+            // if (other.TryGetComponent(out Goal goal))
+                // GameManager.Instance.ScorePoint(curHolder.teamController);
             
-            // if (other.TryGetComponent(out Soldier soldier) )
-            // {
-            //     if (soldier.curSoldierRole == SoldierRole.Attacker && soldier.IsActive)
-            //         soldier.HoldBall(this);
-            // }
-            // if (curHolder == null )
-            // {
-            //     Soldier soldier = other.GetComponent<Soldier>();
-            //     if (soldier != null && 
-            //     soldier.curSoldierRole == SoldierRole.Defender && 
-            //     soldier.IsActive)
-            //     {
-            //         soldier.HoldBall(this);
-            //     }
-            // }
+           //RESET
+           
         }
     }
 }

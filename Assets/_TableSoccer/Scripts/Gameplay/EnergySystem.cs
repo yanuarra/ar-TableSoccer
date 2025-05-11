@@ -6,6 +6,7 @@ namespace YRA
 {
     public class EnergySystem : MonoBehaviour
     {
+        public bool isPlayer;
         public bool canSpawn {get; private set;}
         private float _maxEnergy = StaticData.ENERGY_MAX;
         private float _startingEnergy = 0;
@@ -13,7 +14,7 @@ namespace YRA
         private float _spawnEnergyCost = StaticData.SPAWN_COST;
         private float _consumptionMultiplier = 1.0f;
         private float _currentEnergy;
-        private Slider _energySlider;
+        [SerializeField] private Slider _energySlider;
         private Image _fillImage;
         public event Action<float> OnEnergyChanged;
         public event Action OnEnergyDepleted;
@@ -33,6 +34,12 @@ namespace YRA
                 OnEnergyDepleted?.Invoke();
             }
         }
+
+        public bool CanAffordSpawn()
+        {
+            return _currentEnergy >= (_spawnEnergyCost * _consumptionMultiplier);
+        }
+
 
         private void Update()
         {
@@ -62,9 +69,9 @@ namespace YRA
             }
         }
 
-        public bool UseEnergy(float amount)
+        public bool UseEnergy()
         {
-            float adjustedAmount = amount * _consumptionMultiplier;
+            float adjustedAmount = _spawnEnergyCost * _consumptionMultiplier;
             
             // Check if we have enough energy
             if (_currentEnergy >= adjustedAmount)

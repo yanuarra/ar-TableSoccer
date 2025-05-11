@@ -1,15 +1,11 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
+using UnityEngine.Events;
 
 namespace YRA{
     public class PlayerInputHandler : MonoBehaviour
     {
-        [SerializeField] private GameObject objectToSpawn;
         [SerializeField] private Camera mainCamera;
-        [SerializeField] private LayerMask planeLayerMask;
+        public UnityEvent<Vector2> onTapEvent;
 
         void Start()
         {
@@ -38,7 +34,7 @@ namespace YRA{
             if (touch.phase == TouchPhase.Began)
             {
                 Vector2 touchPosition = touch.position;
-                SpawnObjectAtPosition(touchPosition);
+                onTapEvent?.Invoke(touchPosition);
             }
         }
         }
@@ -49,21 +45,7 @@ namespace YRA{
             if (Input.GetMouseButtonDown(0))
             {
                 Vector2 mousePosition = Input.mousePosition;
-                SpawnObjectAtPosition(mousePosition);
-            }
-        }
-
-        private void SpawnObjectAtPosition(Vector2 screenPosition)
-        {
-            Ray ray = mainCamera.ScreenPointToRay(screenPosition);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity, planeLayerMask))
-            {
-                // Spawn the object at hit position
-                Debug.Log("Object spawned at: " + hit.point);
-                if (objectToSpawn!= null)
-                    Instantiate(objectToSpawn, hit.point, Quaternion.identity);
+                onTapEvent?.Invoke(mousePosition);
             }
         }
     }

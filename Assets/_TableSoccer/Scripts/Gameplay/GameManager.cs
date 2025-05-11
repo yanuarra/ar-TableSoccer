@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-
 namespace YRA {
     public enum GameState
     {
@@ -26,10 +25,13 @@ namespace YRA {
         [SerializeField] TextMeshProUGUI _stateText;
         [SerializeField] TextMeshProUGUI _timerText;
         [SerializeField] TextMeshProUGUI _scoreText;
+        [SerializeField] TextMeshProUGUI _matchText;
+        [SerializeField] TextMeshProUGUI _playerRoleText;
+        [SerializeField] TextMeshProUGUI _enemyRoleText;
             
         [Header("Team References")]
-        public TeamController playerTeam;
-        public TeamController enemyTeam;
+        public TeamController _teamPlayer;
+        public TeamController _teamEnemy;
         [SerializeField] Ball _ball;
         
         [Header("Game Progress")]
@@ -80,18 +82,17 @@ namespace YRA {
             _curMatch++;
             _matchTimer = _matchDuration;
             CurrentState = GameState.Playing;
-            FieldSetup.Instance.SetupField();
             if (_curMatch % 2 == 1)
             {
-                SetupAttackDefenseRoles(playerTeam, enemyTeam);
+                SetupAttackDefenseRoles(_teamPlayer, _teamEnemy);
             }
             else
             {
-                SetupAttackDefenseRoles(enemyTeam, playerTeam);
+                SetupAttackDefenseRoles(_teamEnemy, _teamPlayer);
             }
-            
             Debug.Log($"Match {_curMatch} started! Player is {CurrentState}");
-            ResetMatch();
+            FieldSetup.Instance.SetupField();
+            UpdateRoleUI();
         }
 
         void SetupAttackDefenseRoles(TeamController attackingTeam, TeamController defendingTeam)
@@ -107,6 +108,7 @@ namespace YRA {
                 _stateText.text = "Preparing next match...";
             
             yield return new WaitForSeconds(_transitionDelay);
+            ResetMatch();
             StartMatch();
         }
 
@@ -126,20 +128,19 @@ namespace YRA {
         private void EndGame()
         {
             CurrentState = GameState.GameOver;
-            
             if (_stateText != null)
                 _stateText.text = "Game Over!";
-                
             string result = _playerScore > _enemyScore ? "Player Wins!" : 
                             _playerScore < _enemyScore ? "Enemy Wins!" : "It's a Draw!";
-                            
             Debug.Log("Game Over! " + result);
         }
 
         void ResetMatch()
         {
-            playerTeam.Reset();
-            enemyTeam.Reset();
+            SoldierManager.Instance.Reset();
+            _teamPlayer.Reset();
+            _teamEnemy.Reset();
+            Ball.Instance.Release();
         }
 
         void GetTeamControllers()
@@ -149,18 +150,18 @@ namespace YRA {
             {
                 if (team.isPlayerTeam)
                 {
-                    playerTeam = team;
+                    _teamPlayer = team;
                 }  
                 else
                 {
-                    enemyTeam = team;
+                    _teamEnemy = team;
                 }
             }
         }
         
-        public void ScoreGoal(bool isPlayer)
+        public void ScorePoint(TeamController team)
         {
-            if (isPlayer)
+            if (team == _teamPlayer)
             {
                 _playerScore++;
             }
@@ -169,12 +170,24 @@ namespace YRA {
                 _enemyScore++;
             }
             UpdateScoreUI();
+            //RESTART MATCH
+            EndCurrentMatch();
         }
             
         private void UpdateScoreUI()
         {
             if (_scoreText != null)
                 _scoreText.text = $"{_playerScore} - {_enemyScore}";
+        }
+        
+        private void UpdateRoleUI()
+        {
+            if (_playerRoleText != null)
+                _playerRoleText.text = $"Player 1 - {_teamPlayer.currentRole}";
+            if (_enemyRoleText != null)
+                _enemyRoleText.text = $"Player 2 - {_teamEnemy.currentRole}";
+            if (_matchText != null)
+                _matchText.text = $"Match {_curMatch}/{_matchCount}";
         }
     }
 }

@@ -14,7 +14,6 @@ namespace YRA
         TeamController teamControllerEnemy;
         [SerializeField] Transform parent;
         [SerializeField] GameObject soldierPrefab;
-
         [SerializeField] private Material _matGray;
         [SerializeField] private Material _matPlayer;
         [SerializeField] private Material _matEnemy;
@@ -22,14 +21,17 @@ namespace YRA
         {
             GetTeamControllers();
             GetSoldiers();
+        }  
+        
+        public void Reset()
+        {
+            soldiersCollection.Clear();
         }
 
         void GetSoldiers()
         {
             soldiersCollection.Clear();
             soldiersCollection = FindObjectsByType<Soldier>(FindObjectsSortMode.None).ToList();
-
-            //dummy
         }
 
         public void GetTeamControllers()
@@ -49,20 +51,31 @@ namespace YRA
         
         public void SpawnSoldier(Vector3 spawnPoint, bool isPlayer)
         {
+            if (soldierPrefab == null) 
+            {
+                Debug.LogError("Soldier Prefab is missing");
+                 return;
+            }
             GameObject soldierGO = Instantiate(soldierPrefab, parent, true);   
             soldierGO.transform.position = new Vector3(spawnPoint.x, 1, spawnPoint.z);
             Soldier soldier = soldierGO.GetComponent<Soldier>();
-            AssignSoldierTeam(soldier, isPlayer);
+            TeamController team = isPlayer? teamControllerPlayer : teamControllerEnemy;
+            AssignSoldierProperties(soldier, team, isPlayer);
+            // AddSoldierToCollection(soldier);
+            team.AddSoldierToTeam(soldier);
         }
         
-        public void AssignSoldierTeam(Soldier soldier, bool isPlayer)
+        public void AssignSoldierProperties(Soldier soldier, TeamController team, bool isPlayer)
         {
+            SoldierRole soldierRoleToAssign = team.currentRole == TeamRole.Attacking? SoldierRole.Attacker:SoldierRole.Defender;
             if (isPlayer)
             {
                 soldier.SetTeamController(teamControllerPlayer);
+                soldier.SetPlayerRole(soldierRoleToAssign);
             } else
             {
                 soldier.SetTeamController(teamControllerEnemy);
+                soldier.SetPlayerRole(soldierRoleToAssign);
             }
         }
 
@@ -76,23 +89,21 @@ namespace YRA
                 break;
                 
                 case SoldierState.Active:
-                    mat.material = soldier.isPlayerTeam? _matPlayer:_matEnemy;
+                    mat.material = soldier.curSoldierRole==SoldierRole.Attacker? _matPlayer:_matEnemy;
                 break;
 
                 case SoldierState.Chasing:
                 break;
             }
-
         }
-        
 
-        public void AddSoldier(Soldier newSoldier)
+        public void AddSoldierToCollection(Soldier newSoldier)
         {
             if (!soldiersCollection.Contains(newSoldier)) 
                 soldiersCollection.Add(newSoldier);
         }
         
-        public void RemoveSoldier(Soldier oldSoldier)
+        public void RemoveSoldierFromCollection(Soldier oldSoldier)
         {
             if (soldiersCollection.Contains(oldSoldier)) 
                 soldiersCollection.Remove(oldSoldier);

@@ -14,35 +14,64 @@ namespace YRA {
 
     public class TeamController : MonoBehaviour
     {        
-        [Header("UI References")]
-        [SerializeField] Slider _energyBar;
 
         [Header("Team Settings")]
         [SerializeField] string teamID;
-        public bool isPlayerTeam; //{get; private set;}
-        // [SerializeField] TeamRole currentRole;
+        [field:SerializeField]
+        public bool isPlayerTeam{get; private set;}
+        [SerializeField] EnergySystem energySystem;
         public TeamRole currentRole { get; private set; }
+        public Goal goal { get; private set; }
         
         [Header("Player References")]
-        [SerializeField]  List<Soldier> soldiers = new List<Soldier>();
-        Transform[] startingPositionsAttack;
-        Transform[] startingPositionsDefense;
+        [SerializeField] List<Soldier> soldiers = new List<Soldier>();
 
         void Start()
         {
-            // soldiers = FindObjectsByType<Soldier>(FindObjectsSortMode.None).Where(x => x.isPlayerTeam).ToList();
+            goal = GetGoal();
+            if (energySystem == null) energySystem = GetComponentInChildren<EnergySystem>();
+            energySystem.isPlayer = isPlayerTeam;
         }
 
         public void Reset()
         {
-            
+            foreach (var item in soldiers)
+            {
+                Destroy(item.gameObject);
+            }
+            soldiers.Clear();
+        }
+        
+        public void AddSoldierToTeam(Soldier newSoldier)
+        {
+            if (!soldiers.Contains(newSoldier)) 
+            {       
+                soldiers.Add(newSoldier);
+                SoldierManager.Instance.AddSoldierToCollection(newSoldier);
+            }
+        }
+
+        public void RemoveSoldierFromTeam(Soldier oldSoldier)
+        {
+            if (soldiers.Contains(oldSoldier)) 
+            {
+                soldiers.Remove(oldSoldier);
+                SoldierManager.Instance.RemoveSoldierFromCollection(oldSoldier);
+            }
+        }
+
+        public Goal GetGoal()
+        {
+            return FindObjectsByType<Goal>(FindObjectsSortMode.None).Where(x => x.isPlayerGoal != isPlayerTeam).FirstOrDefault();
         }
 
         public void UpdateSoldiersState(Soldier except, SoldierState soldierState)
         {
             foreach (var soldier in soldiers)
             {
-                if (soldier == except) continue;
+                if (soldier == except || 
+                    soldier.curSoldierState == SoldierState.InActive) 
+                    continue;
                 soldier.SetState(soldierState);
             }
         }
@@ -52,19 +81,6 @@ namespace YRA {
             List<Soldier> activeSoldiers = SoldierManager.Instance.GetActiveAttackers();
             activeSoldiers.Remove(soldier);
             return activeSoldiers.OrderBy(x => Vector3.Distance(soldier.transform.position, x.transform.position)).FirstOrDefault();
-    
-            // Soldier nearest = null;
-            // float minDistance = float.MaxValue;
-            // foreach (var soldier in SoldierManager.Instance.GetActiveAttackers())
-            // {
-            //     float distance = Vector3.Distance(position, soldier.transform.position);
-            //     if (distance < minDistance)
-            //     {
-            //         minDistance = distance;
-            //         nearest = soldier;
-            //     }
-            // }
-            // return nearest;
         }
         
         public void SetTeamRole(TeamRole role)

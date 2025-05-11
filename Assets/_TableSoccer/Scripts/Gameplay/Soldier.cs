@@ -34,6 +34,7 @@ namespace YRA{
         public bool IsActive;
         [field: SerializeField]
         public GameObject _charObj  { get; private set; }
+        float _spawnTime;
         
         [Header("Movement Settings")]
         float _movementSpeed;
@@ -47,7 +48,7 @@ namespace YRA{
         float _detectionRadius;
 
         [Header("References")]
-        [SerializeField] TeamController teamController;
+        public TeamController teamController{ get; private set; }
         [SerializeField] SphereCollider detectionCollider;
         [SerializeField] GameObject detectionVisual;
         public Ball heldBall {get; private set;}
@@ -65,7 +66,7 @@ namespace YRA{
         {
             if (_rb == null) _rb = GetComponent<Rigidbody>();
             if (_movement == null) _movement = GetComponent<Movement>();
-            isPlayerTeam = teamController.isPlayerTeam;
+            // isPlayerTeam = teamController.isPlayerTeam;
             // keep position
             _originPosition = transform.position;   
         }
@@ -74,7 +75,6 @@ namespace YRA{
         {
             teamController = team;
             isPlayerTeam = teamController.isPlayerTeam;
-
             Debug.Log($"isPlayerTeam {teamController.isPlayerTeam}");
         }
 
@@ -101,22 +101,38 @@ namespace YRA{
         }
 
         #region Collision Handlers
+        void OnTriggerStay(Collider other) {
+            if (other.TryGetComponent(out Ball ball))
+            {
+                if (ball.curHolder == null &&
+                    curSoldierRole == SoldierRole.Attacker && 
+                    curSoldierState == SoldierState.Chasing)
+                {
+                    HoldBall(ball);
+                }
+            }
+            
+        }
+
         void OnTriggerEnter(Collider other)
         {
             if (curSoldierState == SoldierState.InActive) return;
-            //Check Attacker Collision 
+            
+            //Check Attacker and Fence Collision 
             if (other.TryGetComponent(out Fence fence))
             {
-                Destroy(this);
+                teamController.RemoveSoldierFromTeam(this);
+                Destroy(gameObject);
             }
+
             //Check Defender and Attacker Collision 
             if (other.TryGetComponent(out Soldier otherSoldier))
             {
                 if (curSoldierRole == SoldierRole.Defender && 
-                    otherSoldier.heldBall != null 
-                    )
+                    otherSoldier.heldBall != null)
                 {
                     SetState(SoldierState.InActive);
+                    teamController.UpdateSoldiersState(this, SoldierState.Active);
                     otherSoldier.PassBallToTeammate();
                     // otherSoldier.SetState(SoldierState.InActive);
                 }
@@ -150,6 +166,7 @@ namespace YRA{
                     break;
                 case SoldierState.Spawning:
                     // Just waiting for detection trigger
+                    HandleSpawningState();
                     break;
                 case SoldierState.InActive:
                     IsActive = false;
@@ -168,10 +185,6 @@ namespace YRA{
                 Debug.LogError("Ball is missing");
                 return;
             }
-            
-            // look for the goal
-            if (_goal == null)
-                _goal = FindObjectsByType<Goal>(FindObjectsSortMode.None).Where(x => x.isPlayerGoal != teamController.isPlayerTeam).FirstOrDefault();
             
             // Attacker look for the ball
             SetSoldierStat();
@@ -203,15 +216,22 @@ namespace YRA{
             Debug.Log($"{curSoldierRole} is chasing the ball");
             if (curSoldierRole == SoldierRole.Attacker)
             {
-                // Vector3 direction = (Ball.Instance.transform.position - transform.position).normalized;
-                // _movement.MoveToDirection(gameObject, direction, _movementSpeed);
                 _movement.MoveToPosition(Ball.Instance.transform.position, _movementSpeed);
             }
             else
             {
-                // _movement.MoveToTarget(gameObject, Ball.Instance.gameObject, _movementSpeed);
                 _movement.MoveFollowObject(Ball.Instance.transform, _movementSpeed);
             }
+        }
+
+        private void HandleSpawningState()
+        {
+            SetSoldierStat();
+            // if (teamController == null)
+            //     teamController = teamController.;
+            if (_goal == null)
+                _goal = teamController.goal;
+            StartCoroutine(StunnedRoutine(_spawnTime));
         }
 
         private void HandleInactiveState()
@@ -245,6 +265,7 @@ namespace YRA{
         #region State Management
         void SetSoldierStat()
         {
+            _spawnTime = StaticData.SPAWN_TIME;
             if (curSoldierRole == SoldierRole.Attacker)
             {
                 _movementSpeed = heldBall == null? StaticData.NORMAL_SPEED_ATT:StaticData.CARRY_SPEED_ATT;
@@ -263,7 +284,7 @@ namespace YRA{
         public void SetPlayerRole(SoldierRole newRole)
         {
             curSoldierRole = newRole;
-            SetState(SoldierState.Active);
+            SetState(SoldierState.Spawning);
         }
         
         public void SetState(SoldierState newState)
@@ -329,7 +350,8 @@ namespace YRA{
             }
             else
             {
-                
+                //Defender WIN
+                GameManager.Instance.ScorePoint(teamController);
             }
         }
         #endregion
