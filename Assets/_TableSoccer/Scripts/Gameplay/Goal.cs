@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 
@@ -13,8 +14,11 @@ namespace YRA {
             {
                 // Goal was scored
                 if (_goalEffect != null)
+                {
+                    _goalEffect.gameObject.SetActive(true);
                     _goalEffect.Play();
-
+                }
+                SoldierManager.Instance.OnGoal();
                 // Notify the game manager
                 GameManager.Instance.ScorePoint(ball.curHolder.teamController);
             }

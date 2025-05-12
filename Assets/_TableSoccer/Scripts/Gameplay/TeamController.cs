@@ -60,6 +60,20 @@ namespace YRA {
             }
         }
 
+        public void OnGoal()
+        {
+            foreach (var soldier in soldiers)
+            {
+                soldier.StopMoving();
+                if (currentRole == TeamRole.Attacking)
+                {
+                    soldier.PlayVictoryAnimation();
+                }else
+                {
+                    soldier.PlayIdleAnimation();
+                }
+            }
+        }
         public Goal GetGoal()
         {
             return FindObjectsByType<Goal>(FindObjectsSortMode.None).Where(x => x.isPlayerGoal != isPlayerTeam).FirstOrDefault();

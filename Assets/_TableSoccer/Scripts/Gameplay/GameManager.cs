@@ -18,7 +18,7 @@ namespace YRA {
     {
         [Header("Game Settings")]
         int _matchCount = StaticData.MATCH_COUNT;
-        float _matchDuration = StaticData.MATCH_TIME_LIMIT;
+        float _matchDuration = 2f;//StaticData.MATCH_TIME_LIMIT;
         float _transitionDelay = 3f;
         
         [Header("UI References")]
@@ -74,7 +74,9 @@ namespace YRA {
                 _timerText.text = "" + Mathf.CeilToInt(_matchTimer).ToString();
             
             if (_matchTimer <= 0)
+            {
                 EndCurrentMatch();
+            }
         }
         
         private void StartMatch()
@@ -132,7 +134,13 @@ namespace YRA {
                 _stateText.text = "Game Over!";
             string result = _playerScore > _enemyScore ? "Player Wins!" : 
                             _playerScore < _enemyScore ? "Enemy Wins!" : "It's a Draw!";
+            
             Debug.Log("Game Over! " + result);
+            MenuSystem.Instance.ShowGameOverScreen();
+            if (_playerScore == _enemyScore)
+            {
+                SceneManager.Instance.OpenScene(3);
+            }
         }
 
         void ResetMatch()

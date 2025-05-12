@@ -48,14 +48,15 @@ namespace YRA{
         [Header("Character Settings")]
         [SerializeField] Animator _charAnimator;
         [SerializeField] SkinnedMeshRenderer _skinnedMeshRenderer;
-        
+        [SerializeField] GameObject _detectionVisual;
+        [SerializeField] GameObject _fenceVisual;
+        [SerializeField] GameObject _inactiveVisual;
         [Header("Defender Settings")]
         private float _detectionRadius;
 
         [Header("References")]
         public TeamController teamController{ get; private set; }
         [SerializeField] SphereCollider detectionCollider;
-        [SerializeField] GameObject detectionVisual;
         public Ball heldBall {get; private set;}
         private Vector3 _originPosition;
         private Coroutine _stunnedCoroutine;
@@ -72,11 +73,23 @@ namespace YRA{
             if (_skinnedMeshRenderer == null) _skinnedMeshRenderer = GetComponent<SkinnedMeshRenderer>();
             // keep position
             _originPosition = transform.position;   
+            _fenceVisual.SetActive(false);
+            // ToggleOutline(false);
+            // ToggleDetectionVisual(false);
         }
+
+        public void StopMoving() => _movement.StopMoving();
+        public void PlayVictoryAnimation() => _charAnimator.SetTrigger("Victory");
+        public void PlayIdleAnimation() => _charAnimator.SetTrigger("Idle");
 
         void ToggleOutline(bool state)
         {
             if (_outline != null) _outline.enabled = state;
+        }
+
+        void ToggleDetectionVisual(bool state)
+        {
+            if (_detectionVisual != null) _detectionVisual.SetActive ( state);
         }
 
         public void SetTeamController(TeamController team)
@@ -157,9 +170,17 @@ namespace YRA{
             //Check Attacker and Fence Collision 
             if (other.TryGetComponent(out Fence fence))
             {
+                _movement.StopMoving();
                 _charAnimator.SetTrigger("Victory");
-                teamController.RemoveSoldierFromTeam(this);
-                Destroy(gameObject);
+                _fenceVisual.SetActive(true);
+                StartCoroutine(WaitForSeconds
+                    (delegate {
+                        teamController.RemoveSoldierFromTeam(this);
+                        Destroy(gameObject);
+                        _fenceVisual.SetActive(false);
+                    },
+                    1.5f)
+                );
             }
 
             //Check Defender and Attacker Collision 
@@ -279,11 +300,10 @@ namespace YRA{
         {
             SetSoldierStat();
             ChangeMaterial();
-            // if (teamController == null)
-            //     teamController = teamController.;
             if (_goal == null)
                 _goal = teamController.goal;
             _charAnimator.SetTrigger("Waving");
+            ToggleDetectionVisual(curSoldierRole == SoldierRole.Defender);
             StartCoroutine(StunnedRoutine(_spawnTime));
         }
 

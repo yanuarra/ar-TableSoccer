@@ -5,9 +5,21 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/_TableSoccer/_Levels/Intro.unity
+    guid: c4a18796d6c77d14580dcb872d043a19
+  - enabled: 1
+    path: Assets/_TableSoccer/_Levels/Main.unity
+    guid: 2afd65f7cb929ce42b5a9e686f3ae571
+  - enabled: 1
+    path: Assets/_TableSoccer/_Levels/Main_AR.unity
+    guid: c2739f7e7142e014fbadc29972f12b9b
+  - enabled: 1
+    path: Assets/_TableSoccer/_Levels/Main_MAZE.unity
+    guid: 5bc86158938ee3b4ea63ce264f342367
   m_configObjects:
     UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: 1773da351a9a5174d83d4db779166ce3, type: 2}
     UnityEditor.XR.ARKit.ARKitSettings: {fileID: 11400000, guid: 09b0064ddac36d349929b3353c75acf0, type: 2}

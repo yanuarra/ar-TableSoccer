@@ -60,9 +60,7 @@ namespace YRA {
         private void OnTriggerEnter(Collider other)
         {
             // if (other.TryGetComponent(out Goal goal))
-                // GameManager.Instance.ScorePoint(curHolder.teamController);
-            
-           //RESET
+                // GameManager.Instance.ScorePoint(curHolder.teamController)
         }
     }
 }

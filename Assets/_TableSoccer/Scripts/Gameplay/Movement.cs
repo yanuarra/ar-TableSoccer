@@ -7,19 +7,19 @@ namespace YRA
     {
         public enum MovementMode
         {
+            InActive,
             Idle,
             MoveToPosition,
             MoveInDirection,
             MoveFollowTarget,
         }
-        public MovementMode currentMode = MovementMode.Idle;
+        public MovementMode currentMode = MovementMode.InActive;
         private  bool _isMoving = false;
         // private  GameObject _origin;
         private  GameObject _target;
         [SerializeField] 
         private  GameObject _moveIndicator;
         // private  Vector3 _direction;
-        private  Vector3 _rotationMask = new Vector3(0, 1, 1);
         private  float _moveSpeed;
         private  float _rotationSpeed = 180.0f;
         private float arrivalDistance = 0.01f;
@@ -37,18 +37,32 @@ namespace YRA
         private Vector3 _moveDirection;
         private Transform _targetObject;
         private float _currentSpeed;
+        private float _multiplier = 1f;
         private Rigidbody rb;
         private bool useRigidbody = false;
+        /// <summary>
+        /// Check if running AR or not
+        /// </summary>
+         ARSupportChecker ar;
         
         private void Awake()
         {
-            rb = GetComponent<Rigidbody>();
-        }        
-        
+        }
+
+        void OnEnable()
+        {
+            ar = FindAnyObjectByType<ARSupportChecker>();
+            if (ar!=null) 
+                _multiplier = ar.isARAvailable()? .01f:1f;
+        }
+
         void Update()
         {
             switch (currentMode)
             {
+                case MovementMode.InActive:
+                    break;
+
                 case MovementMode.Idle:
                     HandleIdle();
                     break;
@@ -66,11 +80,10 @@ namespace YRA
                     break;
             }
         
-            if (!useRigidbody)
+            if (!useRigidbody && currentMode != MovementMode.InActive)
             {
                 ApplyMovement();
             }
-            
         }
 
         #region Public Control Methods
@@ -179,11 +192,12 @@ namespace YRA
         #region Movement Application
         private void ApplyMovement()
         {
+            Debug.Log(ar.isARAvailable());
+            _multiplier = ar.isARAvailable()? .01f:1f;
             if (_moveDirection.sqrMagnitude > 0.01f && _currentSpeed > 0.01f)
-                transform.position += _moveDirection * _currentSpeed * Time.deltaTime;
+                transform.position += _moveDirection * _currentSpeed * Time.deltaTime * _multiplier;
         
-            // transform.position = Vector3.MoveTowards(transform.position, _moveDirection, _moveSpeed * Time.deltaTime);
-            transform.position = new Vector3(transform.position.x, 1, transform.position.z);
+            transform.position = new Vector3(transform.position.x, 0, transform.position.z);
         }  
 
         private void RotateTowards(Vector3 targetPos)
@@ -215,7 +229,7 @@ namespace YRA
 
         public void ToggleMoveIndicator(bool state) {
             if (_moveIndicator==null) return;
-            _moveIndicator.transform.localPosition = new Vector3 (0,-0.75f,1.75f);
+            _moveIndicator.transform.localPosition = new Vector3 (0,-0.75f,0f);
             _moveIndicator.SetActive(state);
         }     
 

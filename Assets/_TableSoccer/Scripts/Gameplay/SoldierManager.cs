@@ -4,22 +4,20 @@ using UnityEngine;
 using System.Linq;
 using UnityEngine.UI;
 using System;
+using NUnit.Framework;
 
 namespace YRA
 {
     public class SoldierManager : Singleton<SoldierManager>
     {
         public List<Soldier> soldiersCollection = new List<Soldier>();
-        TeamController teamControllerPlayer;
-        TeamController teamControllerEnemy;
+        public TeamController teamControllerPlayer {get; private set;}
+        public TeamController teamControllerEnemy{get; private set;}
         [SerializeField] Transform parent;
         [SerializeField] GameObject soldierPrefab;
         [SerializeField] public Material _matGray;
         [SerializeField] public Material _matPlayer;
         [SerializeField] public Material _matEnemy;
-        [SerializeField] public Color32 _colGray;
-        [SerializeField] public Color32 _colPlayer;
-        [SerializeField] public Color32 _colEnemy;
         public void Start()
         {
             GetTeamControllers();
@@ -35,6 +33,12 @@ namespace YRA
         {
             soldiersCollection.Clear();
             soldiersCollection = FindObjectsByType<Soldier>(FindObjectsSortMode.None).ToList();
+        }
+
+        public void OnGoal()
+        {
+            teamControllerEnemy.OnGoal();
+            teamControllerPlayer.OnGoal();
         }
 
         public void GetTeamControllers()
@@ -60,7 +64,9 @@ namespace YRA
                  return;
             }
             GameObject soldierGO = Instantiate(soldierPrefab, parent, true);   
-            soldierGO.transform.position = new Vector3(spawnPoint.x, 1, spawnPoint.z);
+            // soldierGO.transform.position = new Vector3(spawnPoint.x, 1, spawnPoint.z);
+            soldierGO.transform.position = spawnPoint;
+            soldierGO.transform.localScale = Vector3.one;
             Soldier soldier = soldierGO.GetComponent<Soldier>();
             TeamController team = isPlayer? teamControllerPlayer : teamControllerEnemy;
             AssignSoldierProperties(soldier, team, isPlayer);
