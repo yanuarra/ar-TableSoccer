@@ -18,9 +18,11 @@ namespace YRA {
                     _goalEffect.gameObject.SetActive(true);
                     _goalEffect.Play();
                 }
-                SoldierManager.Instance.OnGoal();
+                if (SoldierManager.Instance)
+                    SoldierManager.Instance.OnGoal();
                 // Notify the game manager
-                GameManager.Instance.ScorePoint(ball.curHolder.teamController);
+                if (GameManager.Instance)
+                    GameManager.Instance.ScorePoint(ball.curHolder.teamController);
             }
         }
     }

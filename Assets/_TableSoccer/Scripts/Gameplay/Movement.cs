@@ -197,7 +197,7 @@ namespace YRA
             if (_moveDirection.sqrMagnitude > 0.01f && _currentSpeed > 0.01f)
                 transform.position += _moveDirection * _currentSpeed * Time.deltaTime * _multiplier;
         
-            transform.position = new Vector3(transform.position.x, 0, transform.position.z);
+            // transform.position = new Vector3(transform.position.x, 0, transform.position.z);
         }  
 
         private void RotateTowards(Vector3 targetPos)

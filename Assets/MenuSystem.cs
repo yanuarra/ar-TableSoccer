@@ -1,5 +1,6 @@
 
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -20,7 +21,7 @@ namespace YRA
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button quitGameButton;
         [SerializeField] private Button resumeButton;
-        [SerializeField] private Button mainMenuButton;
+        [SerializeField] private Button pauseButton;
         [SerializeField] private Button retryButton;
         [SerializeField] private Button ARLevelButton;
         private GameObject currentActivePanel;
@@ -46,7 +47,8 @@ namespace YRA
             if (startGameButton) startGameButton.onClick.AddListener(StartGame);
             if (quitGameButton) quitGameButton.onClick.AddListener(QuitGame);
             if (resumeButton) resumeButton.onClick.AddListener(ResumeGame);
-            if (mainMenuButton) mainMenuButton.onClick.AddListener(ReturnToMainMenu);
+            if (settingsButton) settingsButton.onClick.AddListener(ShowSettingsMenu);
+            if (pauseButton) pauseButton.onClick.AddListener(TogglePauseMenu);
             if (retryButton) retryButton.onClick.AddListener(RestartLevel);
             if (ARLevelButton) ARLevelButton.onClick.AddListener(LoadARLevel);
         }
@@ -79,6 +81,13 @@ namespace YRA
             HideAllPanels();
             panel.SetActive(true);
             currentActivePanel = panel;
+        }
+        
+        public void ShowSettingsMenu()
+        {
+            ShowPanel(settingsPanel);
+            Time.timeScale = 0f;
+            isGamePaused = true;
         }
         
         public void ShowMainMenu()
@@ -131,7 +140,7 @@ namespace YRA
 
         public void ResumeGame()
         {
-            HideAllPanels();
+            ShowMainMenu();
             Time.timeScale = 1f;
             isGamePaused = false;
         }

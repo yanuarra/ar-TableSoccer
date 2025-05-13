@@ -18,7 +18,7 @@ namespace YRA {
     {
         [Header("Game Settings")]
         int _matchCount = StaticData.MATCH_COUNT;
-        float _matchDuration = 2f;//StaticData.MATCH_TIME_LIMIT;
+        float _matchDuration = StaticData.MATCH_TIME_LIMIT;
         float _transitionDelay = 3f;
         
         [Header("UI References")]

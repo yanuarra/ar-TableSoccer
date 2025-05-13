@@ -28,14 +28,13 @@ namespace YRA{
         [SerializeField] private TMP_Text Debugtext; 
         [SerializeField] private float _maxRaycastDistance = 100f;
         public UnityEvent<Vector2> onTapEvent;
+        public Vector2 _tapPosition;
         
         void Awake()
         {
             _inputActions = new NewInputAction();
             _inputActions.Enable();
-            // clickAction = _inputActions.FindAction(_clickName);
-            // tapPositionAction = _inputActions.FindAction(_tapPositionName);
-            // tapPressedAction = _inputActions.FindAction(_tapPressedName);
+            _inputActions.SpawnObject.Enable();
             clickAction         = playerInput.actions[_clickName];
             tapPositionAction   = playerInput.actions[_tapPositionName];
             tapPressedAction    = playerInput.actions[_tapPressedName];
@@ -43,29 +42,22 @@ namespace YRA{
 
         private void OnTapPressedPerformed(InputAction.CallbackContext context)
         {
-            Vector2 tapPos = tapPositionAction.ReadValue<Vector2>();
-            Debugtext.text = $"Tapped at position {tapPos}!";
-            onTapEvent?.Invoke(tapPos);
-
+            Vector2 _tapPosition = tapPositionAction.ReadValue<Vector2>();
+            Debugtext.text = $"Tapped at position {_tapPosition}!";
+            onTapEvent?.Invoke(_tapPosition);
         }
         
         private void OnClickPerformed(InputAction.CallbackContext context)
         {
             // Vector2 mousePosition = Mouse.current.position.ReadValue();
             Vector2 mousePosition = context.ReadValue<Vector2>();
-            Debugtext.text = $"Click at position {mousePosition}!";
+            Debug.Log( $"Click at position {mousePosition}!");
             onTapEvent?.Invoke(mousePosition);
         }
 
         private void OnTapPositionPerformed(InputAction.CallbackContext context)
         {
-            // Vector2 touchPos = _inputActions.SpawnObject.Tap.ReadValue<Vector2>();
-            // onTapEvent?.Invoke(touchPos);
-            // Vector2 touchPosition = Touchscreen.current.primaryTouch.position.ReadValue();
-
-            // Vector2 tpos = context.ReadValue<Vector2>();
-            // Debugtext.text = $"Tapped at position {tpos}!";
-            // onTapEvent?.Invoke(tpos);
+            // _tapPosition = context.ReadValue<Vector2>();
         }
 
         private void OnEnable() {
@@ -90,6 +82,7 @@ namespace YRA{
             tapPositionAction?.Disable();
             tapPressedAction?.Disable();
             clickAction?.Disable();
+            _inputActions.SpawnObject.Disable();
         }
 
         void Start()
@@ -101,28 +94,9 @@ namespace YRA{
 
         void Update()
         {
-            // if (Application.isMobilePlatform) 
-            // {
-            //     HandleMobileInput();
-
-            // }
-            // else
-            // {
-            //     HandlePCInput();
-            // }
         }
         
         void HandleMobileInput() {
-            // if (Input.touchCount > 0)
-            // {
-            //     Touch touch = Input.GetTouch(0);
-                
-            //     if (touch.phase == TouchPhase.Began)
-            //     {
-            //         Vector2 touchPosition = touch.position;
-            //         onTapEvent?.Invoke(touchPosition);
-            //     }
-            // }
         }
       
         private void HandlePCInput()

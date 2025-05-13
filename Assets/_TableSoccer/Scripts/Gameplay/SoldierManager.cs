@@ -56,7 +56,7 @@ namespace YRA
             }
         }
         
-        public void SpawnSoldier(Vector3 spawnPoint, bool isPlayer)
+        public void SpawnSoldier(Vector3 spawnPoint, Vector3 normal, bool isPlayer)
         {
             if (soldierPrefab == null) 
             {
