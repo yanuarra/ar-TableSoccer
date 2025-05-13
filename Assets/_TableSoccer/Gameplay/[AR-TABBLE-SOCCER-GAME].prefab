@@ -1537,6 +1537,7 @@ MonoBehaviour:
     m_Bits: 64
   energySystems: []
   Debugtext: {fileID: 4687878750109822301}
+  normalOffset: 0.01
 --- !u!114 &4802968939146457053
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6018,7 +6019,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isPersistant: 0
   fieldSideRole: 0
-  showDivisionLine: 1
+  showDivisionLine: 0
   divisionY: 0
   divisionZ: 0
   fieldGO: {fileID: 8775712646489134560}

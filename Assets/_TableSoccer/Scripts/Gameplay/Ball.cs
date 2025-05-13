@@ -16,8 +16,9 @@ namespace YRA {
         public Soldier curHolder { get; private set; }
 
         [Header("References")]
-        Rigidbody _ballRigidbody;
-        SphereCollider _ballCollider;
+        private Rigidbody _ballRigidbody; 
+        private Transform _gameplay;
+        private SphereCollider _ballCollider;
         private Vector3 movementDirection;
         private Vector3 startPosition;
         private Movement _movement;
@@ -37,7 +38,7 @@ namespace YRA {
             _ballRigidbody.isKinematic = true;
             transform.SetParent(soldier.transform);
             // transform.localPosition = Vector3.zero;
-            transform.localPosition = new Vector3 (0,-0.5f,1);
+            transform.localPosition = new Vector3 (0,0,1);
             _movement.StopMoving();
         }
         
@@ -51,8 +52,7 @@ namespace YRA {
 
         public void Release()
         {
-            // transform.SetParent(curHolder.transform.parent);
-            transform.parent = null;
+            transform.SetParent(_gameplay);
             curHolder = null;
             _ballRigidbody.isKinematic = true;
         }

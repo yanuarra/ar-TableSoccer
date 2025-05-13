@@ -25,6 +25,7 @@ namespace YRA {
 
         [Header("References")]
         [SerializeField] GameManager _gameManager;
+
         TeamController _playerTeamController;
         TeamController _enemyTeamController;
         [SerializeField] Ball _ball;
@@ -72,20 +73,30 @@ namespace YRA {
             }
         }
 
+        public Vector3 GetFieldsUpwards(){
+            return fieldGO.transform.up;
+        }
+
         private void CreateField(){
             // fieldGO.transform.localScale = new Vector3(fieldScaleX, 1, fieldScaleZ);
             bounds = fieldGO.GetComponent<Collider>().bounds;
             float fieldOffset = _ball.ballRadius*2;
             fieldLength = bounds.extents.z - fieldOffset;
             fieldWidth  = bounds.extents.x  - fieldOffset;
+            Debug.Log(fieldLength+ " " + fieldWidth);
         }
 
         public PlaneSide GetSideForPoint(Vector3 point)
         {
-            // Vector2 x = new Vector2(-fieldWidth, fieldWidth);
-            // Vector2 z = new Vector2(bounds.center.z, fieldWidth);
-            // return point.z > bounds.center.z && point.z < fieldLength ? PlaneSide.Player : PlaneSide.Enemy;
-            return point.z < divisionZ ? PlaneSide.Player : PlaneSide.Enemy;
+            Vector2 x = new Vector2(-fieldWidth, fieldWidth);
+            Vector2 z = new Vector2(bounds.center.z, fieldWidth);
+            Rect rect = new Rect(0, 0, 150, 150);
+            Bounds newBounds = new Bounds(x,z);
+            float disp = Vector3.Distance(_playerTeamController.goal.transform.position, point);
+            float dise = Vector3.Distance(_enemyTeamController.goal.transform.position, point);
+            return disp > dise? PlaneSide.Player : PlaneSide.Enemy;;
+            // return rect.Contains(point)?PlaneSide.Player : PlaneSide.Enemy;;
+            // return point.z < divisionZ ? PlaneSide.Player : PlaneSide.Enemy;
         }
 
         private void SetupTeams(){
@@ -97,8 +108,8 @@ namespace YRA {
             float offsetY = Random.Range(-bounds.extents.y, bounds.extents.y);
             float multiplier =_playerTeamController.currentRole == TeamRole.Attacking? -1 : 1; 
             multiplier = FindAnyObjectByType<ARSupportChecker>().isARAvailable()? multiplier/100 : multiplier;
-            float offsetZ = Random.Range(0, multiplier * fieldLength);
-            _ball.transform.position = bounds.center + new Vector3(offsetX, 0, offsetZ);
+            float offsetZ = Random.Range(bounds.center.z, multiplier * fieldLength);
+            _ball.transform.position = bounds.center + new Vector3(offsetX, fieldGO.transform.position.y, offsetZ);
             // _ball.transform.position = new Vector3(_ball.transform.position.x, 0, _ball.transform.position.z);
         }
     }

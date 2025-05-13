@@ -56,16 +56,22 @@ namespace YRA
             }
         }
         
-        public void SpawnSoldier(Vector3 spawnPoint, Vector3 normal, bool isPlayer)
+        public void SpawnSoldier(Vector3 hitPoint, Vector3 normal, float normalOffset, bool isPlayer)
         {
             if (soldierPrefab == null) 
             {
                 Debug.LogError("Soldier Prefab is missing");
                  return;
             }
-            GameObject soldierGO = Instantiate(soldierPrefab, parent, true);   
+
+            //experimental
+            Vector3 spawnPosition = hitPoint + (normal * 1);
+            Quaternion spawnRotation = Quaternion.FromToRotation(Vector3.up, normal);
+            GameObject soldierGO = Instantiate(soldierPrefab, spawnPosition, spawnRotation, parent);   
+            
+            // GameObject soldierGO = Instantiate(soldierPrefab, parent, true);   
             // soldierGO.transform.position = new Vector3(spawnPoint.x, 1, spawnPoint.z);
-            soldierGO.transform.position = spawnPoint;
+            soldierGO.transform.position = hitPoint;
             soldierGO.transform.localScale = Vector3.one;
             Soldier soldier = soldierGO.GetComponent<Soldier>();
             TeamController team = isPlayer? teamControllerPlayer : teamControllerEnemy;

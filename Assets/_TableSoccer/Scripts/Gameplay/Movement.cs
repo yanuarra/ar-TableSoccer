@@ -39,11 +39,11 @@ namespace YRA
         private float _currentSpeed;
         private float _multiplier = 1f;
         private Rigidbody rb;
-        private bool useRigidbody = false;
+        [SerializeField] private bool useRigidbody = false;
         /// <summary>
         /// Check if running AR or not
         /// </summary>
-         ARSupportChecker ar;
+        ARSupportChecker ar;
         
         private void Awake()
         {
@@ -54,6 +54,8 @@ namespace YRA
             ar = FindAnyObjectByType<ARSupportChecker>();
             if (ar!=null) 
                 _multiplier = ar.isARAvailable()? .01f:1f;
+        
+            rb= GetComponent<Rigidbody>();
         }
 
         void Update()
@@ -83,6 +85,14 @@ namespace YRA
             if (!useRigidbody && currentMode != MovementMode.InActive)
             {
                 ApplyMovement();
+            }
+        }
+        
+        private void FixedUpdate()
+        {
+            if (useRigidbody)
+            {
+                ApplyRigidbodyMovement();
             }
         }
 
@@ -192,14 +202,40 @@ namespace YRA
         #region Movement Application
         private void ApplyMovement()
         {
-            Debug.Log(ar.isARAvailable());
+            
             _multiplier = ar.isARAvailable()? .01f:1f;
             if (_moveDirection.sqrMagnitude > 0.01f && _currentSpeed > 0.01f)
                 transform.position += _moveDirection * _currentSpeed * Time.deltaTime * _multiplier;
         
             // transform.position = new Vector3(transform.position.x, 0, transform.position.z);
         }  
-
+    
+        private void ApplyRigidbodyMovement()
+        {
+            // Physics-based movement
+            if (_moveDirection.sqrMagnitude > 0.01f && _currentSpeed > 0.01f)
+            {
+                Vector3 velocity = _moveDirection * _currentSpeed;
+                if (rb.useGravity)
+                {
+                    velocity.y = rb.linearVelocity.y;
+                }
+                rb.linearVelocity = velocity;
+            }
+            else if (_currentSpeed < 0.01f)
+            {
+                // Preserve y velocity for gravity
+                if (rb.useGravity)
+                {
+                    rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
+                }
+                else
+                {
+                    rb.linearVelocity = Vector3.zero;
+                }
+            }
+        }
+    
         private void RotateTowards(Vector3 targetPos)
         {
             // Vector3 lookatRot = Quaternion.LookRotation(targetPos, Vector3.up).eulerAngles;
@@ -213,7 +249,7 @@ namespace YRA
             if (_lockZRotation) targetDirection.z = 0;
             if (targetDirection != Vector3.zero)
             {
-                Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
+                Quaternion targetRotation = Quaternion.LookRotation(targetDirection, FieldSetup.Instance.GetFieldsUpwards());
                 transform.rotation = Quaternion.RotateTowards(
                     transform.rotation, 
                     targetRotation, 

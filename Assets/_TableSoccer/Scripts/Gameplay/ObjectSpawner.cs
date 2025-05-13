@@ -10,7 +10,9 @@ namespace YRA
         public LayerMask planeLayerMask;
         public EnergySystem[] energySystems;
         [SerializeField] private TMP_Text Debugtext;
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
+        [Header("Spawning Settings")]
+        [SerializeField] private float normalOffset = 0.01f;
+
         void Start()
         {
             cam = Camera.main;
@@ -39,7 +41,7 @@ namespace YRA
                 EnergySystem e = GetEnerySystem(isPlayerSide);
                 Debug.Log(isPlayerSide + " " +e.isPlayer);
                 if (!e.CanAffordSpawn()) return;
-                SoldierManager.Instance.SpawnSoldier(hit.point, hit.normal, isPlayerSide);
+                SoldierManager.Instance.SpawnSoldier(hit.point, hit.normal, normalOffset, isPlayerSide);
                 e.UseEnergy();
             }
         }
