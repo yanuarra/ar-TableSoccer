@@ -51,6 +51,8 @@ namespace YRA{
         [SerializeField] GameObject _detectionVisual;
         [SerializeField] GameObject _fenceVisual;
         [SerializeField] GameObject _inactiveVisual;
+
+
         [Header("Defender Settings")]
         private float _detectionRadius;
 
@@ -63,6 +65,12 @@ namespace YRA{
         [SerializeField] private Movement _movement;
         [SerializeField] private Goal _goal;
         private float _distanceToBall;
+
+        [Header("Audio SFX")]
+        [SerializeField] AudioClip _getBallSFX;
+        [SerializeField] AudioClip _getBallHolderSFX;
+        [SerializeField] AudioClip _passBallSFX;
+        [SerializeField] AudioClip _portalSFX;
         
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
@@ -74,6 +82,7 @@ namespace YRA{
             // keep position
             _originPosition = transform.position;   
             _fenceVisual.SetActive(false);
+            _inactiveVisual.SetActive(false);
             // ToggleOutline(false);
             // ToggleDetectionVisual(false);
         }
@@ -151,6 +160,24 @@ namespace YRA{
         }
 
         #region Collision Handlers
+
+        void RemoveSoldierFromField()
+        {
+            _movement.StopMoving();
+            _charAnimator.SetTrigger("Victory");
+            _fenceVisual.SetActive(true);
+            if (_portalSFX!=null)
+                    AudioHandler.Instance.PlayAudioSfx(_portalSFX);
+             StartCoroutine(WaitForSeconds
+                (delegate {
+                    teamController.RemoveSoldierFromTeam(this);
+                    Destroy(gameObject);
+                    _fenceVisual.SetActive(false);
+                },
+                1.5f)
+            );
+        }
+
         void OnTriggerStay(Collider other) {
             if (other.TryGetComponent(out Ball ball))
             {
@@ -166,21 +193,15 @@ namespace YRA{
         void OnTriggerEnter(Collider other)
         {
             if (curSoldierState == SoldierState.InActive) return;
+            if (other.TryGetComponent(out Goal goal)){
+                if (curSoldierRole == SoldierRole.Attacker && heldBall == null)
+                    RemoveSoldierFromField();
+            }
             
             //Check Attacker and Fence Collision 
             if (other.TryGetComponent(out Fence fence))
             {
-                _movement.StopMoving();
-                _charAnimator.SetTrigger("Victory");
-                _fenceVisual.SetActive(true);
-                StartCoroutine(WaitForSeconds
-                    (delegate {
-                        teamController.RemoveSoldierFromTeam(this);
-                        Destroy(gameObject);
-                        _fenceVisual.SetActive(false);
-                    },
-                    1.5f)
-                );
+                RemoveSoldierFromField();
             }
 
             //Check Defender and Attacker Collision 
@@ -189,15 +210,11 @@ namespace YRA{
                 if (curSoldierRole == SoldierRole.Defender && 
                     otherSoldier.heldBall != null)
                 {
+                    if (_getBallHolderSFX!=null)
+                        AudioHandler.Instance.PlayAudioSfx(_getBallHolderSFX);
                     otherSoldier.PassBallToTeammate();
-                    // _charAnimator.SetTrigger("Victory");
                     SetState(SoldierState.InActive); 
                     teamController.UpdateSoldiersState(this, SoldierState.Active);
-                    // StartCoroutine(WaitForSeconds(delegate { 
-                    //     SetState(SoldierState.InActive); 
-                    //     teamController.UpdateSoldiersState(this, SoldierState.Active);},
-                    //     1f));
-                    // otherSoldier.SetState(SoldierState.InActive);
                 }
             }
 
@@ -265,9 +282,11 @@ namespace YRA{
                     _charAnimator.SetTrigger("Running");
                     Debug.Log(gameObject.name + " State:Straight");
                     // If no Ball to chase or hold, go straight into the opponent Land Field
-                    Vector3 originPosXZ = new Vector3(transform.position.x, 0, transform.position.z);
-                    Vector3 targetPosXZ = new Vector3(_goal.transform.position.x, 0, _goal.transform.position.z);
-                    Vector3 thirdPoint = new Vector3(originPosXZ.x, 0, targetPosXZ.z);
+                    // Vector3 originPosXZ = new Vector3(transform.position.x, 0, transform.position.z);
+                    Vector3 originPosXZ = transform.position;
+                    // Vector3 targetPosXZ = new Vector3(_goal.transform.position.x, 0, _goal.transform.position.z);
+                    Vector3 targetPosXZ = _goal.transform.position;
+                    Vector3 thirdPoint = new Vector3(originPosXZ.x, targetPosXZ.y, targetPosXZ.z);
                     thirdPoint.y = originPosXZ.y;
                     Vector3 direction = thirdPoint - transform.position;
                     SetSoldierStat();
@@ -312,6 +331,7 @@ namespace YRA{
             SetSoldierStat();
             ChangeMaterial();
             _charAnimator.SetTrigger("Idle");
+            _inactiveVisual.gameObject.SetActive(true);
             if (curSoldierRole == SoldierRole.Defender)
             {
                 StartCoroutine(GetBackToOriginPos());
@@ -412,6 +432,8 @@ namespace YRA{
             heldBall.SetHolder(this);
             SetState(SoldierState.HoldingBall);
             teamController.UpdateSoldiersState (this, SoldierState.Active);
+            if (_getBallSFX!=null)
+                AudioHandler.Instance.PlayAudioSfx(_getBallSFX);
         }
         
         public void ReleaseBall()
@@ -429,13 +451,13 @@ namespace YRA{
             Soldier nearestTeammate = teamController.GetNearestActiveAttacker(this);
             if (nearestTeammate != null && nearestTeammate != this)
             {
-                // Calculate direction to teammate
                 // Vector3 passDirection = (nearestTeammate.transform.position - transform.position).normalized;
                 // Release the ball and make it move towards the teammate
                 nearestTeammate.SetState(SoldierState.Chasing);
                 heldBall.PassBall(nearestTeammate.transform, _passSpeed);
-                // Set state to inactive temporarily
                 ReleaseBall();
+                if (_passBallSFX!=null)
+                    AudioHandler.Instance.PlayAudioSfx(_passBallSFX);
             }
             else
             {

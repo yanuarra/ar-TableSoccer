@@ -15,6 +15,8 @@ namespace YRA {
         [SerializeField] private float divisionY = 0f;
         [SerializeField] private float divisionZ = 0f;
         [SerializeField] private GameObject fieldGO;
+        [SerializeField] private GameObject fieldPlayer;
+        [SerializeField] private GameObject fieldEnemy;
         [SerializeField] private float fieldScaleZ = 4f;
         [SerializeField] private float fieldScaleX = 2f;
         public float fieldLength { get; private set; }
@@ -104,13 +106,22 @@ namespace YRA {
         }
         
         private void SetupBall(){
-            float offsetX = Random.Range(-fieldWidth, fieldWidth);
-            float offsetY = Random.Range(-bounds.extents.y, bounds.extents.y);
-            float multiplier =_playerTeamController.currentRole == TeamRole.Attacking? -1 : 1; 
-            multiplier = FindAnyObjectByType<ARSupportChecker>().isARAvailable()? multiplier/100 : multiplier;
-            float offsetZ = Random.Range(bounds.center.z, multiplier * fieldLength);
-            _ball.transform.position = bounds.center + new Vector3(offsetX, fieldGO.transform.position.y, offsetZ);
-            // _ball.transform.position = new Vector3(_ball.transform.position.x, 0, _ball.transform.position.z);
+            GameObject whichField = _playerTeamController.currentRole == TeamRole.Attacking? fieldEnemy:fieldPlayer;
+            Bounds bounds = whichField.GetComponent<Collider>().bounds; 
+
+            float randomX = Random.Range(bounds.min.x, bounds.max.x);
+            float randomY = Random.Range(bounds.min.y, bounds.max.y);
+            float randomZ = Random.Range(bounds.min.z, bounds.max.z);
+            Vector3 randomPosition = new Vector3(randomX, bounds.center.y, randomZ);
+            _ball.transform.localPosition = randomPosition;
+
+            // float offsetX = Random.Range(-fieldWidth, fieldWidth);
+            // float offsetY = Random.Range(-bounds.extents.y, bounds.extents.y);
+            // float multiplier =_playerTeamController.currentRole == TeamRole.Attacking? -1 : 1; 
+            // multiplier = FindAnyObjectByType<ARSupportChecker>().isARAvailable()? multiplier/1000 : multiplier;
+            // float offsetZ = Random.Range(bounds.center.z, multiplier * fieldLength);
+            // _ball.transform.position = bounds.center + new Vector3(offsetX, fieldGO.transform.position.y, offsetZ);
+            // // _ball.transform.position = new Vector3(_ball.transform.position.x, 0, _ball.transform.position.z);
         }
     }
 }

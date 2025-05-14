@@ -1,0 +1,1 @@
+C:\Users\ryanu\Documents\Projects\Projects\ar-TableSoccer\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\build\intermediates\cxx\RelWithDebInfo\502k6o1n\obj\arm64-v8a

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
 
 namespace YRA {
     public enum GameState
@@ -58,7 +59,7 @@ namespace YRA {
             _curState = GameState.Idle;
             GetTeamControllers();
             UpdateScoreUI();
-            StartMatch();
+            StartCoroutine(DelayedStartMatch());
         }
 
         private void Update()
@@ -79,8 +80,9 @@ namespace YRA {
             }
         }
         
-        private void StartMatch()
+        private IEnumerator DelayedStartMatch()
         {
+            yield return new WaitForEndOfFrame();
             _curMatch++;
             _matchTimer = _matchDuration;
             CurrentState = GameState.Playing;
@@ -111,7 +113,7 @@ namespace YRA {
             
             yield return new WaitForSeconds(_transitionDelay);
             ResetMatch();
-            StartMatch();
+            StartCoroutine(DelayedStartMatch());
         }
 
         private void EndCurrentMatch()
@@ -134,13 +136,21 @@ namespace YRA {
                 _stateText.text = "Game Over!";
             string result = _playerScore > _enemyScore ? "Player Wins!" : 
                             _playerScore < _enemyScore ? "Enemy Wins!" : "It's a Draw!";
-            
+                    
+            MenuSystem.Instance.ShowWinScreen($"{result}! Thanks for playing");
             Debug.Log("Game Over! " + result);
-            MenuSystem.Instance.ShowGameOverScreen();
             if (_playerScore == _enemyScore)
             {
-                SceneManager.Instance.OpenScene(3);
+                MenuSystem.Instance.ShowWinScreen($"{result}!\nStarting maze mode. . .");
+                DelayedRoutine(delegate {SceneManager.Instance.OpenScene(3);}, 3f);
             }
+        }
+
+        IEnumerator DelayedRoutine(Action act, float duration)
+        {
+            yield return new WaitForSeconds(duration);
+            act?.Invoke();
+
         }
 
         void ResetMatch()

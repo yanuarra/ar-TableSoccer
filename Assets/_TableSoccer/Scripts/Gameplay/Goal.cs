@@ -7,6 +7,7 @@ namespace YRA {
     {
         public bool isPlayerGoal;
         [SerializeField] ParticleSystem _goalEffect;
+        [SerializeField] AudioClip _goalSFX;
 
         private void OnTriggerEnter(Collider other)
         {
@@ -21,8 +22,15 @@ namespace YRA {
                 if (SoldierManager.Instance)
                     SoldierManager.Instance.OnGoal();
                 // Notify the game manager
-                if (GameManager.Instance)
+                if (GameManager.Instance){
                     GameManager.Instance.ScorePoint(ball.curHolder.teamController);
+                    if (_goalSFX != null)
+                        AudioHandler.Instance.PlayAudioSfx(_goalSFX);
+                }else 
+                {
+                    //MAZE MODE
+                    MenuSystem.Instance.ShowWinScreen("You win! Thanks for playing");
+                }
             }
         }
     }
