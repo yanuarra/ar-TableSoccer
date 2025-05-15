@@ -186,10 +186,18 @@ namespace YRA
             isGamePaused = false;
         }
 
+        public void LoadMainLevel()
+        {
+            HideAllPanels();
+            SceneManager.Instance.OpenScene(1); 
+            Time.timeScale = 1f;
+            isGamePaused = false;
+        }
+        
         public void LoadARLevel()
         {
             HideAllPanels();
-            SceneManager.Instance.OpenScene(2); 
+            SceneManager.Instance.OpenScene(2);
             Time.timeScale = 1f;
             isGamePaused = false;
         }
