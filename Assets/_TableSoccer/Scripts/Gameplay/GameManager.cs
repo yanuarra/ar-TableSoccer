@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
+using UnityEditor;
 
 namespace YRA {
     public enum GameState
@@ -20,6 +21,7 @@ namespace YRA {
         [Header("Game Settings")]
         int _matchCount = StaticData.MATCH_COUNT;
         float _matchDuration = StaticData.MATCH_TIME_LIMIT;
+        float _frenzyTime = StaticData.FRENZY_TIME_START;
         float _transitionDelay = 3f;
         
         [Header("UI References")]
@@ -34,11 +36,12 @@ namespace YRA {
         public TeamController _teamPlayer;
         public TeamController _teamEnemy;
         [SerializeField] Ball _ball;
-        
+
         [Header("Game Progress")]
-        [SerializeField] GameState _curState;
-        int _curMatch = 0;
-        float _matchTimer;
+        bool _frenzyHasBegun = false;
+         [SerializeField] GameState _curState;
+        private int _curMatch = 0;
+        private float _matchTimer;
         private int _playerScore = 0;
         private int _enemyScore = 0;
 
@@ -74,6 +77,10 @@ namespace YRA {
             if (_timerText != null)
                 _timerText.text = "" + Mathf.CeilToInt(_matchTimer).ToString();
             
+            if (_matchTimer <= _frenzyTime && !_frenzyHasBegun)
+            {
+                StartFrenzyTime();
+            }
             if (_matchTimer <= 0)
             {
                 EndCurrentMatch();
@@ -114,6 +121,13 @@ namespace YRA {
             yield return new WaitForSeconds(_transitionDelay);
             ResetMatch();
             StartCoroutine(DelayedStartMatch());
+        }
+
+        private void StartFrenzyTime()
+        {
+            _frenzyHasBegun = true;
+            SoldierManager.Instance.BeginFrenzy();
+            MenuSystem.Instance.ShowFrenzyPanel();
         }
 
         private void EndCurrentMatch()

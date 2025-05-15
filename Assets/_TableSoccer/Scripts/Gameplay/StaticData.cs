@@ -4,10 +4,12 @@ public static class StaticData
     //DEFAULT VAL
     public static float ENERGY_MAX = 6.0f; 
     public static float ENERGY_REGENERATION_SPEED = 1.5f; 
+    public static float ENERGY_REGENERATION_SPEED_FRENZY = 2f; 
     public static float SPAWN_TIME = .5f;
     public static float SPAWN_COST = 2f;
     public static int MATCH_COUNT  = 5;    
     public static float MATCH_TIME_LIMIT  = 140f;     
+    public static float FRENZY_TIME_START  = 138f;     
     public static float BALL_SPEED  = 1.5f;     
     
     //ATT VAL    

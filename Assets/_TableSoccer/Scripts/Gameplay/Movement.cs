@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 
@@ -20,7 +21,7 @@ namespace YRA
         [SerializeField] 
         private  GameObject _moveIndicator;
         // private  Vector3 _direction;
-        private  float _moveSpeed;
+        // private  float _moveSpeed;
         private  float _rotationSpeed = 180.0f;
         private float arrivalDistance = 0.01f;
         private  bool _faceMovementDirection = true;
@@ -44,6 +45,7 @@ namespace YRA
         /// Check if running AR or not
         /// </summary>
         ARSupportChecker ar;
+        Action doneEvent;
         
         private void Awake()
         {
@@ -81,13 +83,33 @@ namespace YRA
                     HandleMoveFollowObject();
                     break;
             }
-        
+
             if (!useRigidbody && currentMode != MovementMode.InActive)
             {
                 ApplyMovement();
+             
+                if (hasReachedTarget() && doneEvent != null)
+                {
+                    doneEvent?.Invoke();
+                    doneEvent = null;
+                }
             }
         }
-        
+
+        private bool hasReachedTarget()
+        {
+            Vector3 directionToTarget = _targetPosition - transform.position;
+            float distanceToTarget = directionToTarget.magnitude;
+            Debug.Log($"{this.name} _targetPosition {_targetPosition} distanceToTarget {distanceToTarget}");
+
+            if (distanceToTarget <= arrivalDistance)
+            {
+                StopMoving();
+                return true;
+            }
+            return false;
+        }
+
         private void FixedUpdate()
         {
             if (useRigidbody)
@@ -97,21 +119,22 @@ namespace YRA
         }
 
         #region Public Control Methods
-        public void MoveToPosition(Vector3 position, float speed = -1)
+        public void MoveToPosition(Vector3 position, float speed = -1, Action done = null)
         {
             currentMode = MovementMode.MoveToPosition;
             _targetPosition = position;
-            _moveSpeed = speed;
+            _currentSpeed = speed;
+            if (done!=null) doneEvent = done;
             ToggleMoveIndicator(true);
         }
-        
+
         public void MoveInDirection(Vector3 direction, float speed = -1)
         {
             if (direction.sqrMagnitude > 0.01f)
             {
                 currentMode = MovementMode.MoveInDirection;
                 _moveDirection = direction.normalized;
-                _moveSpeed = speed;
+                _currentSpeed = speed;
             }
             ToggleMoveIndicator(true);
         }
@@ -122,7 +145,7 @@ namespace YRA
             {
                 currentMode = MovementMode.MoveFollowTarget;
                 _targetObject = target;
-                _moveSpeed = speed;
+                _currentSpeed = speed;
             }
             ToggleMoveIndicator(true);
         }
@@ -132,7 +155,7 @@ namespace YRA
         private void HandleIdle()
         {
             _currentSpeed = 0;
-            _moveSpeed = 0;
+            // _moveSpeed = 0;
             _moveDirection = Vector3.zero;
             ToggleMoveIndicator(false);
         }
@@ -142,11 +165,12 @@ namespace YRA
             Vector3 directionToTarget = _targetPosition - transform.position;
             _moveDirection = directionToTarget.normalized;
             float distanceToTarget = directionToTarget.magnitude;
-            _currentSpeed = _moveSpeed;
-            if (distanceToTarget <= 0.01f)
+            // _currentSpeed = _moveSpeed;
+            if (distanceToTarget <= arrivalDistance)
             {
-                _currentSpeed = 0;
-                currentMode = MovementMode.Idle;
+                // _currentSpeed = 0;
+                // currentMode = MovementMode.Idle;
+                StopMoving();
                 return;
             }
             if (_faceMovementDirection)
@@ -154,12 +178,11 @@ namespace YRA
                 RotateTowards(_targetPosition);
             }
             
-            UpdateSpeed();
         }
         
         private void HandleMoveInDirection()
         {
-            _currentSpeed = _moveSpeed;
+            // _currentSpeed = _moveSpeed;
             // UpdateSpeed();
             if (_faceMovementDirection && _moveDirection.sqrMagnitude > 0.01f)
             {
@@ -188,21 +211,19 @@ namespace YRA
             else
             {
                 _moveDirection = directionToTarget.normalized;
-                _currentSpeed = _moveSpeed;
+                // _currentSpeed = _moveSpeed;
                 if (_faceMovementDirection)
                 {
                     RotateTowards(_targetObject.position);
                 }
             }
             
-            UpdateSpeed();
         }
         #endregion
 
         #region Movement Application
         private void ApplyMovement()
         {
-            
             _multiplier = ar.isARAvailable()? .01f:1f;
             if (_moveDirection.sqrMagnitude > 0.01f && _currentSpeed > 0.01f)
                 transform.position += _moveDirection * _currentSpeed * Time.deltaTime * _multiplier;
@@ -257,9 +278,10 @@ namespace YRA
                 );
             }
         }
-        
-        private void UpdateSpeed()
+
+        public void UpdateSpeed(float newValue)
         {
+            _currentSpeed = newValue;
         }
         #endregion
 

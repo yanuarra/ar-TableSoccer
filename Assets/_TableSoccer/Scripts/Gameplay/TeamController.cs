@@ -33,6 +33,15 @@ namespace YRA {
             energySystem.isPlayer = isPlayerTeam;
         }
 
+        public void BeginFrenzy()
+        {
+            foreach (var item in soldiers)
+            {
+                item.BeginFrenzy();
+            }
+            energySystem.BeginFrenzyRate();
+        }
+
         public void Reset()
         {
             foreach (var item in soldiers)

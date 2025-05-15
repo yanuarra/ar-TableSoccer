@@ -40,6 +40,7 @@ namespace YRA
             return _currentEnergy >= (_spawnEnergyCost * _consumptionMultiplier);
         }
 
+        public void BeginFrenzyRate() => _rechargeRate = StaticData.ENERGY_REGENERATION_SPEED_FRENZY;
 
         private void Update()
         {

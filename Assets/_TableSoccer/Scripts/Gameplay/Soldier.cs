@@ -36,8 +36,9 @@ namespace YRA{
         [field: SerializeField]
         public GameObject _charObj  { get; private set; }
         [SerializeField]  
-        Outline _outline;
+        private Outline _outline;
         private float _spawnTime;
+        private bool _isFrenzy = false;
         
         [Header("Movement Settings")]
         private float _movementSpeed;
@@ -51,7 +52,6 @@ namespace YRA{
         [SerializeField] GameObject _detectionVisual;
         [SerializeField] GameObject _fenceVisual;
         [SerializeField] GameObject _inactiveVisual;
-
 
         [Header("Defender Settings")]
         private float _detectionRadius;
@@ -340,13 +340,20 @@ namespace YRA{
                 StartCoroutine(StunnedRoutine(_reactiveTime));
             }
         }
+
         //Defender Get Back To Origin Pos
         IEnumerator GetBackToOriginPos()
         {
             if (curSoldierRole == SoldierRole.Defender)
             {
                 _charAnimator.SetTrigger("Running");
-                _movement.MoveToPosition(_originPosition, _movementSpeed);
+                _movement.MoveToPosition(_originPosition, _movementSpeed, _isFrenzy ? delegate
+                {
+                    SetState(SoldierState.Active);
+                    _charAnimator.SetTrigger("Idle");
+                    _movement.StopMoving();
+                } : null);
+                if (_isFrenzy) yield break;
             }
             yield return new WaitForSeconds(_reactiveTime);
             SetState(SoldierState.Active);
@@ -373,12 +380,21 @@ namespace YRA{
         #endregion
 
         #region State Management
+
+        public void BeginFrenzy()
+        {
+            _isFrenzy = true;
+            SetSoldierStat();
+            _movement.UpdateSpeed(_movementSpeed);
+        }
+        
         void SetSoldierStat()
         {
             _spawnTime = StaticData.SPAWN_TIME;
             if (curSoldierRole == SoldierRole.Attacker)
             {
                 _movementSpeed = heldBall == null? StaticData.NORMAL_SPEED_ATT:StaticData.CARRY_SPEED_ATT;
+                _movementSpeed = _isFrenzy ? StaticData.NORMAL_SPEED_ATT : _movementSpeed;
                 _passSpeed = StaticData.PASS_SPEED_ATT;
                 _reactiveTime = StaticData.REACTIVE_TIME_ATT;
                 _detectionRadius = 0;
@@ -390,7 +406,6 @@ namespace YRA{
                 _detectionRadius = StaticData.DETECTION_RANGE_DEF * FieldSetup.Instance.fieldWidth;
             }
         }
-
         public void SetPlayerRole(SoldierRole newRole)
         {
             curSoldierRole = newRole;

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace YRA
 {
-    public class ObjectSpawner : MonoBehaviour
+    public class SoldierSpawner : MonoBehaviour
     {
         // [SerializeField] private GameObject objectToSpawn;
         Camera cam;

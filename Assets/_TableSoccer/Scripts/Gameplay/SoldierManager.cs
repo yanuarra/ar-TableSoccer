@@ -1,10 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
-using UnityEngine.UI;
-using System;
-using NUnit.Framework;
 
 namespace YRA
 {
@@ -18,6 +14,8 @@ namespace YRA
         [SerializeField] public Material _matGray;
         [SerializeField] public Material _matPlayer;
         [SerializeField] public Material _matEnemy;
+        bool _frenzyHasBegun = false;
+
         public void Start()
         {
             GetTeamControllers();
@@ -40,7 +38,14 @@ namespace YRA
             teamControllerEnemy.OnGoal();
             teamControllerPlayer.OnGoal();
         }
-
+        
+        public void BeginFrenzy()
+        {
+            _frenzyHasBegun = true;
+            teamControllerEnemy.BeginFrenzy();
+            teamControllerPlayer.BeginFrenzy();
+        }
+        
         public void GetTeamControllers()
         {
             TeamController[] teams = FindObjectsByType<TeamController>(FindObjectsSortMode.None);
@@ -49,35 +54,42 @@ namespace YRA
                 if (team.isPlayerTeam)
                 {
                     teamControllerPlayer = team;
-                }else
+                }
+                else
                 {
                     teamControllerEnemy = team;
                 }
             }
         }
-        
+
         public void SpawnSoldier(Vector3 hitPoint, Vector3 normal, float normalOffset, bool isPlayer)
         {
-            if (soldierPrefab == null) 
+            if (soldierPrefab == null)
             {
                 Debug.LogError("Soldier Prefab is missing");
-                 return;
+                return;
             }
 
-            //experimental
-            Vector3 spawnPosition = hitPoint + (normal * 1);
+            // Vector3 spawnPosition = hitPoint + (normal * 1);
+            Vector3 spawnPosition = hitPoint;
             Quaternion spawnRotation = Quaternion.FromToRotation(Vector3.up, normal);
-            GameObject soldierGO = Instantiate(soldierPrefab, spawnPosition, spawnRotation, parent);   
-            
-            // GameObject soldierGO = Instantiate(soldierPrefab, parent, true);   
-            // soldierGO.transform.position = new Vector3(spawnPoint.x, 1, spawnPoint.z);
+            GameObject soldierGO = Instantiate(soldierPrefab, spawnPosition, spawnRotation, parent);
+            //Face camera
+            Vector3 lookDirection = Camera.main.transform.position - soldierGO.transform.position;
+            Vector3 projectedDirection = Vector3.ProjectOnPlane(lookDirection, soldierGO.transform.up);
+            if (projectedDirection != Vector3.zero)
+                soldierGO.transform.rotation = Quaternion.LookRotation(projectedDirection, soldierGO.transform.up);
+
+            //Face camera
             soldierGO.transform.position = hitPoint;
             soldierGO.transform.localScale = Vector3.one;
             Soldier soldier = soldierGO.GetComponent<Soldier>();
-            TeamController team = isPlayer? teamControllerPlayer : teamControllerEnemy;
+            TeamController team = isPlayer ? teamControllerPlayer : teamControllerEnemy;
             AssignSoldierProperties(soldier, team, isPlayer);
             // AddSoldierToCollection(soldier);
             team.AddSoldierToTeam(soldier);
+            if (_frenzyHasBegun)
+                 soldier.BeginFrenzy();
         }
         
         public void AssignSoldierProperties(Soldier soldier, TeamController team, bool isPlayer)
@@ -93,24 +105,6 @@ namespace YRA
                 soldier.SetPlayerRole(soldierRoleToAssign);
             }
         }
-
-        // public void ChangeMaterial(Soldier soldier, SoldierState state)
-        // {
-        //     Renderer mat = soldier._charObj.GetComponent<Renderer>();
-        //     switch (state)
-        //     {       
-        //         case SoldierState.InActive:
-        //             mat.material = _matGray;
-        //         break;
-                
-        //         case SoldierState.Active:
-        //             mat.material = soldier.curSoldierRole==SoldierRole.Attacker? _matPlayer:_matEnemy;
-        //         break;
-
-        //         case SoldierState.Chasing:
-        //         break;
-        //     }
-        // }
 
         public void AddSoldierToCollection(Soldier newSoldier)
         {

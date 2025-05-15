@@ -1,7 +1,8 @@
 
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -16,6 +17,7 @@ namespace YRA
         [SerializeField] private GameObject winPanel;
         [SerializeField] private GameObject losePanel;
         [SerializeField] private GameObject settingsPanel;
+        [SerializeField] private GameObject frenzyPanel;
         
         [Header("Button References")]
         [SerializeField] private Button startGameButton;
@@ -41,7 +43,8 @@ namespace YRA
                 pauseMenuPanel,
                 winPanel,
                 losePanel,
-                settingsPanel
+                settingsPanel,
+                frenzyPanel
             };
 
             // Setup initial state
@@ -57,7 +60,6 @@ namespace YRA
             if (ARLevelButton) ARLevelButton.onClick.AddListener(LoadARLevel);
         }
 
-        
         private void Update()
         {
             // Check for escape key to toggle pause menu during gameplay
@@ -78,6 +80,19 @@ namespace YRA
             currentActivePanel = null;
         }
 
+        private void EnablePanelBriefly(GameObject panel)
+        {
+            if (panel == null) return;
+            panel.SetActive(true);
+            StartCoroutine( WaitForSeconds(delegate{panel.SetActive(false);}, 2f));
+        }
+        
+        IEnumerator WaitForSeconds (Action doneEvent, float duration)
+        {
+            yield return new WaitForSeconds(duration);
+            doneEvent?.Invoke();
+        }
+
         private void ShowPanel(GameObject panel)
         {
             if (panel == null) return;
@@ -92,6 +107,11 @@ namespace YRA
             ShowPanel(settingsPanel);
             Time.timeScale = 0f;
             isGamePaused = true;
+        }
+
+        public void ShowFrenzyPanel()
+        {
+            EnablePanelBriefly(frenzyPanel);
         }
         
         public void ShowMainMenu()
