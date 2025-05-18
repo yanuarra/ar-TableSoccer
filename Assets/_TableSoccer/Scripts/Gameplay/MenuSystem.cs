@@ -35,7 +35,7 @@ namespace YRA
 
         void Start()
         {
-                
+
             // Initialize panels list
             allPanels = new List<GameObject>
             {
@@ -58,6 +58,9 @@ namespace YRA
             if (pauseButton) pauseButton.onClick.AddListener(TogglePauseMenu);
             if (retryButton) retryButton.onClick.AddListener(RestartLevel);
             if (ARLevelButton) ARLevelButton.onClick.AddListener(LoadARLevel);
+
+            //Toggle AR Mode, Mobile = enable 
+            settingsButton.gameObject.SetActive(Application.platform == RuntimePlatform.Android);
         }
 
         private void Update()
@@ -159,7 +162,7 @@ namespace YRA
         public void StartGame()
         {
             HideAllPanels();
-            SceneManager.Instance.OpenScene(1); 
+            SceneManager.Instance.OpenScene(1, "Main"); 
             Time.timeScale = 1f;
             isGamePaused = false;
         }

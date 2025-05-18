@@ -98,7 +98,7 @@ public partial class @NewInputAction: IInputActionCollection2, IDisposable
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
-                    ""initialStateCheck"": false
+                    ""initialStateCheck"": true
                 },
                 {
                     ""name"": ""TapPosition"",
@@ -124,7 +124,7 @@ public partial class @NewInputAction: IInputActionCollection2, IDisposable
                     ""name"": """",
                     ""id"": ""2ae6b50d-e5ad-491a-b793-73e92f4cfb19"",
                     ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": ""Tap"",
+                    ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Click"",

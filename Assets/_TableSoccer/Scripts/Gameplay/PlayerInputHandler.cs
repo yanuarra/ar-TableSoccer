@@ -49,8 +49,7 @@ namespace YRA{
         
         private void OnClickPerformed(InputAction.CallbackContext context)
         {
-            // Vector2 mousePosition = Mouse.current.position.ReadValue();
-            Vector2 mousePosition = context.ReadValue<Vector2>();
+            Vector2 mousePosition = Mouse.current.position.ReadValue();
             Debug.Log( $"Click at position {mousePosition}!");
             onTapEvent?.Invoke(mousePosition);
         }
@@ -91,20 +90,12 @@ namespace YRA{
                 _mainCamera = Camera.main;
         }
 
-
-        void Update()
-        {
-        }
-        
-        void HandleMobileInput() {
-        }
-      
         private void HandlePCInput()
         {
             // Check for mouse click
             if (Mouse.current.leftButton.wasPressedThisFrame)
             {
-                Vector2 mousePosition= Mouse.current.position.ReadValue();
+                Vector2 mousePosition = Mouse.current.position.ReadValue();
                 onTapEvent?.Invoke(mousePosition);
             }
         }

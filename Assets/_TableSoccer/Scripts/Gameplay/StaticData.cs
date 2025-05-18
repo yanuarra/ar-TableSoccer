@@ -9,7 +9,7 @@ public static class StaticData
     public static float SPAWN_COST = 2f;
     public static int MATCH_COUNT  = 5;    
     public static float MATCH_TIME_LIMIT  = 140f;     
-    public static float FRENZY_TIME_START  = 138f;     
+    public static float FRENZY_TIME_START  = 15f;     
     public static float BALL_SPEED  = 1.5f;     
     
     //ATT VAL    

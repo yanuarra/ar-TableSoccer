@@ -35,7 +35,7 @@ namespace YRA
 
             if (Physics.Raycast(ray, out hit, Mathf.Infinity, planeLayerMask))
             {
-                Debugtext.text = hit.transform.gameObject.name;
+                // Debugtext.text = hit.transform.gameObject.name;
                 // Spawn the object at hit position
                 bool isPlayerSide = FieldSetup.Instance.GetSideForPoint(hit.point) == FieldSetup.PlaneSide.Player;
                 EnergySystem e = GetEnerySystem(isPlayerSide);

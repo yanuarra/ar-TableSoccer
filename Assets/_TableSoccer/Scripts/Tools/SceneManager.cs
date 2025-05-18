@@ -8,11 +8,16 @@ namespace YRA
     public class SceneManager : Singleton<SceneManager>
     {
         private int _backSceneIndex;
+        private string _sceneName;
 
-        public void OpenScene(int sceneIndex)
+        public void OpenScene(int sceneIndex = -1, string sceneName = null)
         {
             _backSceneIndex = sceneIndex;
-            StartCoroutine(OpenSceneCoroutine(sceneIndex));
+            if (sceneName != null)
+            {
+                _sceneName = sceneName;
+            }
+            StartCoroutine(OpenSceneCoroutine());
         }
 
         public void RestartLevel()
@@ -25,10 +30,16 @@ namespace YRA
             return UnityEngine.SceneManagement.SceneManager.GetActiveScene();
         }
 
-        private IEnumerator OpenSceneCoroutine(int sceneIndex)
+        private IEnumerator OpenSceneCoroutine()
         {
             yield return new WaitForEndOfFrame();
-            UnityEngine.SceneManagement.SceneManager.LoadScene(sceneIndex);
+            if (_backSceneIndex != -1)
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene(_backSceneIndex);
+            }else
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene(_sceneName);
+            }
         }
     }
 }
