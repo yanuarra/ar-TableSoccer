@@ -5241,8 +5241,9 @@ MonoBehaviour:
   mainMenuPanel: {fileID: 0}
   pauseMenuPanel: {fileID: 1180451310}
   winPanel: {fileID: 1419738401}
-  losePanel: {fileID: 90987454}
+  losePanel: {fileID: 1419738401}
   settingsPanel: {fileID: 90987454}
+  frenzyPanel: {fileID: 0}
   startGameButton: {fileID: 0}
   settingsButton: {fileID: 1673665672}
   quitGameButton: {fileID: 1073121784}
@@ -6397,7 +6398,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1813558262}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d6917d65099da624c9386e7906356624, type: 3}
   m_Name: 

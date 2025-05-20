@@ -29,7 +29,7 @@ namespace YRA {
                 }else 
                 {
                     //MAZE MODE
-                    MenuSystem.Instance.ShowWinScreen("You win! Thanks for playing");
+                    MenuSystem.Instance.ShowGameOverScreen("You win! Thanks for playing");
                 }
             }
         }

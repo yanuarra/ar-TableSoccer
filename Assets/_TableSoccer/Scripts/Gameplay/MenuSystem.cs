@@ -35,7 +35,6 @@ namespace YRA
 
         void Start()
         {
-
             // Initialize panels list
             allPanels = new List<GameObject>
             {
@@ -142,7 +141,7 @@ namespace YRA
         {
             gameOverText.text = text;
             ShowPanel(losePanel);
-            Time.timeScale = 0f;
+            // Time.timeScale = 0f;
         }
 
         public void TogglePauseMenu()

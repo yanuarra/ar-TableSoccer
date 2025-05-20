@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 using UnityEditor;
+using UnityEngine.Events;
 
 namespace YRA {
     public enum GameState
@@ -90,6 +91,7 @@ namespace YRA {
         private IEnumerator DelayedStartMatch()
         {
             yield return new WaitForEndOfFrame();
+            _frenzyHasBegun = false;
             _curMatch++;
             _matchTimer = _matchDuration;
             CurrentState = GameState.Playing;
@@ -151,12 +153,12 @@ namespace YRA {
             string result = _playerScore > _enemyScore ? "Player Wins!" : 
                             _playerScore < _enemyScore ? "Enemy Wins!" : "It's a Draw!";
                     
-            MenuSystem.Instance.ShowWinScreen($"{result}! Thanks for playing");
+            MenuSystem.Instance.ShowGameOverScreen($"{result}! Thanks for playing");
             Debug.Log("Game Over! " + result);
             if (_playerScore == _enemyScore)
             {
-                MenuSystem.Instance.ShowWinScreen($"{result}!\nStarting maze mode. . .");
-                DelayedRoutine(delegate {SceneManager.Instance.OpenScene(3);}, 3f);
+                MenuSystem.Instance.ShowGameOverScreen($"{result}!\nStarting maze mode. . .");
+                StartCoroutine(DelayedRoutine(()=> SceneManager.Instance.OpenScene(3), 1f));
             }
         }
 
@@ -164,7 +166,6 @@ namespace YRA {
         {
             yield return new WaitForSeconds(duration);
             act?.Invoke();
-
         }
 
         void ResetMatch()
